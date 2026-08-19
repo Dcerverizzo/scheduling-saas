@@ -1,0 +1,40 @@
+{
+  "name": "@scheduling-saas/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "next-auth": "5.0.0-beta.32",
+    "server-only": "0.0.1",
+    "bcryptjs": "3.0.3",
+    "luxon": "3.7.2",
+    "zod": "4.4.3",
+    "@scheduling-saas/database": "workspace:*",
+    "@scheduling-saas/domain": "workspace:*",
+    "@scheduling-saas/config": "workspace:*",
+    "@scheduling-saas/validation": "workspace:*",
+    "@scheduling-saas/queue": "workspace:*"
+  },
+  "devDependencies": {
+    "@auth/core": "0.41.3",
+    "@types/luxon": "3.7.4",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "24.13.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "6.0.3"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

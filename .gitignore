@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+.next/
+dist/
+build/
+.turbo/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# prisma
+packages/database/generated/
+
+# whatsapp session (never version auth credentials)
+apps/whatsapp-worker/session/
+apps/whatsapp-worker/.baileys_auth/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# editor / os
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# test coverage
+coverage/

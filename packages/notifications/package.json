@@ -1,0 +1,23 @@
+{
+  "name": "@scheduling-saas/notifications",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@scheduling-saas/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "@types/node": "24.13.3",
+    "eslint": "9.39.5",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.11"
+  }
+}

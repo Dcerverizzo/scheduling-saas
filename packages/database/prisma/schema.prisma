@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CompanyRole {
+  OWNER
+  STAFF
+}
+
+enum AvailabilityExceptionType {
+  BLOCK
+  AVAILABLE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum BookingEventType {
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  BOOKING_RESCHEDULED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+  BOOKING_NO_SHOW
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_REMINDER
+  BOOKING_CANCELLED
+  BOOKING_RESCHEDULED
+}
+
+enum NotificationStatus {
+  QUEUED
+  PROCESSING
+  SENT
+  DELIVERED
+  FAILED
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  emailVerifiedAt    DateTime?
+  phone              String?
+  phoneVerifiedAt    DateTime?
+  passwordHash       String
+  mustChangePassword Boolean   @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  accounts        Account[]
+  sessions        Session[]
+  companyMembers  CompanyMember[]
+  staffProfiles   StaffProfile[]
+  customerProfile CustomerProfile?
+
+  @@map("users")
+}
+
+// Account/Session/VerificationToken seguem o schema de referência do Auth.js PrismaAdapter.
+// A estratégia de sessão do MVP é "jwt" (exigida pelo Credentials provider), então essas
+// tabelas ficam inertes por enquanto — mantidas prontas para quando um provider OAuth for
+// adicionado na Fase 2, sem precisar de nova migration.
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Company {
+  id           String  @id @default(uuid())
+  name         String
+  slug         String  @unique
+  phone        String?
+  timezone     String  @default("America/Sao_Paulo")
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String  @default("BR")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  members  CompanyMember[]
+  staff    StaffProfile[]
+  services               Service[]
+  availabilityRules      AvailabilityRule[]
+  availabilityExceptions AvailabilityException[]
+  bookings               Booking[]
+  bookingEvents          BookingEvent[]
+  notificationLogs       NotificationLog[]
+
+  @@map("companies")
+}
+
+model CompanyMember {
+  id        String      @id @default(uuid())
+  companyId String
+  userId    String
+  role      CompanyRole
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@map("company_members")
+}
+
+model StaffProfile {
+  id          String  @id @default(uuid())
+  companyId   String
+  userId      String
+  displayName String
+  phone       String?
+  active      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services     ServiceStaff[]
+  availabilityRules      AvailabilityRule[]
+  availabilityExceptions AvailabilityException[]
+  bookings               Booking[]
+
+  @@unique([companyId, userId])
+  @@index([companyId])
+  @@map("staff_profiles")
+}
+
+model CustomerProfile {
+  id     String  @id @default(uuid())
+  userId String  @unique
+  phone  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@map("customer_profiles")
+}
+
+model Service {
+  id                  String  @id @default(uuid())
+  companyId           String
+  name                String
+  description         String?
+  durationMinutes     Int
+  bufferBeforeMinutes Int     @default(0)
+  bufferAfterMinutes  Int     @default(0)
+  priceInCents        Int
+  currency            String  @default("BRL")
+  active              Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  staff    ServiceStaff[]
+  bookings Booking[]
+
+  @@index([companyId])
+  @@map("services")
+}
+
+model ServiceStaff {
+  serviceId String
+  staffId   String
+
+  createdAt DateTime @default(now())
+
+  service Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, staffId])
+  @@index([staffId])
+  @@map("service_staff")
+}
+
+// startTime/endTime são "HH:mm" em horário LOCAL da empresa (não UTC) — a conversão
+// pra instante absoluto só acontece na hora de calcular slots (ver packages/domain).
+model AvailabilityRule {
+  id         String    @id @default(uuid())
+  companyId  String
+  staffId    String
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
+  validFrom  DateTime? @db.Date
+  validUntil DateTime? @db.Date
+  active     Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, dayOfWeek])
+  @@map("availability_rules")
+}
+
+// startsAt/endsAt aqui SÃO instantes absolutos (UTC) — ao contrário da regra recorrente,
+// uma exceção é um evento pontual (ex: "de folga dia 25/12"), então já nasce em UTC.
+model AvailabilityException {
+  id        String                     @id @default(uuid())
+  companyId String
+  staffId   String
+  type      AvailabilityExceptionType
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+
+  createdAt DateTime @default(now())
+
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, startsAt])
+  @@map("availability_exceptions")
+}
+
+// Proteção definitiva contra double-booking: EXCLUDE constraint com GiST sobre
+// (staffId, tsrange(startsAt, endsAt)) pra status PENDING/CONFIRMED, adicionada via
+// migration SQL manual (ver prisma/migrations/*_add_booking_exclusion_constraint) —
+// Prisma não representa isso no schema declarativo. Essa constraint é a última linha
+// de defesa; a checagem de disponibilidade na aplicação é a primeira.
+model Booking {
+  id         String   @id @default(uuid())
+  companyId  String
+  customerId String
+  staffId    String
+  serviceId  String
+
+  startsAt DateTime
+  endsAt   DateTime
+
+  status BookingStatus @default(CONFIRMED)
+
+  customerNameSnapshot    String
+  customerPhoneSnapshot   String?
+  serviceNameSnapshot     String
+  serviceDurationSnapshot Int
+  servicePriceSnapshot    Int
+
+  idempotencyKey String? @unique
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cancelledAt DateTime?
+  completedAt DateTime?
+
+  company  Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  staff    StaffProfile    @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  service  Service         @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  events   BookingEvent[]
+  notificationLogs NotificationLog[]
+
+  @@index([companyId])
+  @@index([staffId, startsAt])
+  @@index([customerId, startsAt])
+  @@map("bookings")
+}
+
+model BookingEvent {
+  id          String           @id @default(uuid())
+  bookingId   String
+  companyId   String
+  actorUserId String?
+  type        BookingEventType
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_events")
+}
+
+model NotificationLog {
+  id              String  @id @default(uuid())
+  companyId       String
+  bookingId       String?
+  recipientUserId String?
+
+  channel NotificationChannel
+  type    NotificationType
+
+  destination       String
+  provider          String?
+  providerMessageId String?
+
+  status       NotificationStatus @default(QUEUED)
+  attemptCount Int                @default(0)
+
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  failedAt     DateTime?
+
+  errorCode    String?
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([status, scheduledFor])
+  @@map("notification_logs")
+}
