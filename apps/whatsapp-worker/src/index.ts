@@ -1,10 +1,20 @@
 import "./env";
 import { Worker } from "bullmq";
-import { BOOKING_REMINDERS_QUEUE, NOTIFICATIONS_QUEUE, redisConnection } from "@scheduling-saas/queue";
-import type { BookingReminderJobData, SendNotificationJobData } from "@scheduling-saas/queue";
+import {
+  BOOKING_REMINDERS_QUEUE,
+  GOOGLE_CALENDAR_SYNC_QUEUE,
+  NOTIFICATIONS_QUEUE,
+  redisConnection,
+} from "@scheduling-saas/queue";
+import type {
+  BookingReminderJobData,
+  GoogleCalendarSyncJobData,
+  SendNotificationJobData,
+} from "@scheduling-saas/queue";
 import { ConsoleNotificationProvider, type NotificationProvider } from "@scheduling-saas/notifications";
 import { sendAndLog } from "./notification-sender";
 import { processBookingReminderJob } from "./process-booking-reminder";
+import { processGoogleCalendarSyncJob } from "./google-calendar-sync";
 import { reconcileMissingConfirmations } from "./reconciliation";
 import { startWhatsAppConnection } from "./whatsapp-connection";
 import { BaileysNotificationProvider } from "./baileys-notification-provider";
@@ -42,7 +52,15 @@ const bookingRemindersWorker = new Worker<BookingReminderJobData>(
   { connection: redisConnection },
 );
 
-for (const worker of [notificationsWorker, bookingRemindersWorker]) {
+const googleCalendarSyncWorker = new Worker<GoogleCalendarSyncJobData>(
+  GOOGLE_CALENDAR_SYNC_QUEUE,
+  async (job) => {
+    await processGoogleCalendarSyncJob(job.data);
+  },
+  { connection: redisConnection },
+);
+
+for (const worker of [notificationsWorker, bookingRemindersWorker, googleCalendarSyncWorker]) {
   worker.on("completed", (job) => {
     console.log(`[whatsapp-worker] job ${job.id} (${worker.name}) concluído`);
   });
@@ -58,12 +76,18 @@ const reconciliationTimer = setInterval(() => {
   });
 }, RECONCILIATION_INTERVAL_MS);
 
-console.log("[whatsapp-worker] booted — consumindo filas 'notifications' e 'booking-reminders'");
+console.log(
+  "[whatsapp-worker] booted — consumindo filas 'notifications', 'booking-reminders' e 'google-calendar-sync'",
+);
 
 process.on("SIGTERM", () => {
   console.log("[whatsapp-worker] received SIGTERM, shutting down");
   clearInterval(reconciliationTimer);
-  Promise.all([notificationsWorker.close(), bookingRemindersWorker.close()])
+  Promise.all([
+    notificationsWorker.close(),
+    bookingRemindersWorker.close(),
+    googleCalendarSyncWorker.close(),
+  ])
     .then(() => process.exit(0))
     .catch(() => process.exit(1));
 });

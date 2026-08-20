@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@scheduling-saas/calendar": "workspace:*",
     "@scheduling-saas/notifications": "workspace:*",
     "@scheduling-saas/queue": "workspace:*",
     "@scheduling-saas/config": "workspace:*",

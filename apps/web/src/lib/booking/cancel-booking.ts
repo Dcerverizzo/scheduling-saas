@@ -1,6 +1,7 @@
 import { canTransitionBookingStatus, DomainError } from "@scheduling-saas/domain";
 import { prisma, type Booking } from "@scheduling-saas/database";
 import { enqueueBookingCancelledNotification } from "@/lib/notifications/enqueue-booking-notifications";
+import { enqueueGoogleCalendarSync } from "@/lib/google-calendar/enqueue-booking-sync";
 
 export interface CancelBookingInput {
   bookingId: string;
@@ -45,6 +46,7 @@ export async function cancelBooking(input: CancelBookingInput): Promise<Booking>
   // Fora da transação (item 21 do PRD). Lembretes pendentes ficam obsoletos
   // sozinhos — o worker confere o status antes de mandar (item 33).
   await enqueueBookingCancelledNotification(updated.id);
+  await enqueueGoogleCalendarSync(updated.id);
 
   return updated;
 }

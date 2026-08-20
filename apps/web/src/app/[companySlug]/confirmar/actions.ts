@@ -9,6 +9,7 @@ import {
   enqueueBookingConfirmation,
   scheduleBookingReminders,
 } from "@/lib/notifications/enqueue-booking-notifications";
+import { enqueueGoogleCalendarSync } from "@/lib/google-calendar/enqueue-booking-sync";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function confirmBookingAction(
@@ -59,6 +60,7 @@ export async function confirmBookingAction(
     // Fora da transação de criação do booking (item 21 do PRD).
     await enqueueBookingConfirmation(booking.id);
     await scheduleBookingReminders(booking.id);
+    await enqueueGoogleCalendarSync(booking.id);
 
     redirect(`/account/bookings?confirmed=${booking.id}`);
   } catch (error) {

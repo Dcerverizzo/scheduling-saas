@@ -12,6 +12,7 @@ import {
   enqueueBookingRescheduledNotification,
   scheduleBookingReminders,
 } from "@/lib/notifications/enqueue-booking-notifications";
+import { enqueueGoogleCalendarSync } from "@/lib/google-calendar/enqueue-booking-sync";
 
 export interface RescheduleBookingInput {
   bookingId: string;
@@ -135,6 +136,7 @@ export async function rescheduleBooking(input: RescheduleBookingInput): Promise<
   // sozinhos; agenda novos lembretes pro horário atualizado.
   await enqueueBookingRescheduledNotification(updated.id);
   await scheduleBookingReminders(updated.id);
+  await enqueueGoogleCalendarSync(updated.id);
 
   return updated;
 }

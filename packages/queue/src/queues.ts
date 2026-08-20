@@ -3,6 +3,7 @@ import { redisConnection } from "./connection";
 
 export const NOTIFICATIONS_QUEUE = "notifications";
 export const BOOKING_REMINDERS_QUEUE = "booking-reminders";
+export const GOOGLE_CALENDAR_SYNC_QUEUE = "google-calendar-sync";
 
 export interface SendNotificationJobData {
   notificationLogId: string;
@@ -17,9 +18,14 @@ export interface BookingReminderJobData {
   reminderLabel: "24h" | "2h";
 }
 
+export interface GoogleCalendarSyncJobData {
+  bookingId: string;
+}
+
 const globalForQueues = globalThis as unknown as {
   notificationsQueue: Queue<SendNotificationJobData> | undefined;
   bookingRemindersQueue: Queue<BookingReminderJobData> | undefined;
+  googleCalendarSyncQueue: Queue<GoogleCalendarSyncJobData> | undefined;
 };
 
 export function getNotificationsQueue(): Queue<SendNotificationJobData> {
@@ -35,4 +41,12 @@ export function getBookingRemindersQueue(): Queue<BookingReminderJobData> {
     { connection: redisConnection },
   );
   return globalForQueues.bookingRemindersQueue;
+}
+
+export function getGoogleCalendarSyncQueue(): Queue<GoogleCalendarSyncJobData> {
+  globalForQueues.googleCalendarSyncQueue ??= new Queue<GoogleCalendarSyncJobData>(
+    GOOGLE_CALENDAR_SYNC_QUEUE,
+    { connection: redisConnection },
+  );
+  return globalForQueues.googleCalendarSyncQueue;
 }
