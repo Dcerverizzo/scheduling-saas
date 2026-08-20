@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@scheduling-saas/database";
 import { formatCentsAsDecimalString } from "@scheduling-saas/domain";
 import { requireSession } from "@/lib/session";
@@ -56,11 +57,19 @@ export default async function MyBookingsPage({ searchParams }: PageProps<"/accou
                     {formatCentsAsDecimalString(booking.servicePriceSnapshot)}
                   </p>
                 </div>
-                <form action={cancelMyBookingAction.bind(null, booking.id)}>
-                  <button type="submit" className="text-xs text-red-600 underline">
-                    cancelar
-                  </button>
-                </form>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={`/account/bookings/${booking.id}/reschedule`}
+                    className="text-xs text-gray-600 underline"
+                  >
+                    reagendar
+                  </Link>
+                  <form action={cancelMyBookingAction.bind(null, booking.id)}>
+                    <button type="submit" className="text-xs text-red-600 underline">
+                      cancelar
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>

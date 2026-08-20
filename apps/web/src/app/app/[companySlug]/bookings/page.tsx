@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@scheduling-saas/database";
 import { formatCentsAsDecimalString } from "@scheduling-saas/domain";
 import { requireCompanyContext } from "@/lib/company-context";
@@ -55,11 +56,19 @@ export default async function CompanyBookingsPage({
                   {formatCentsAsDecimalString(booking.servicePriceSnapshot)} · {booking.status}
                 </p>
               </div>
-              <form action={cancelCompanyBookingAction.bind(null, companySlug, booking.id)}>
-                <button type="submit" className="text-xs text-red-600 underline">
-                  cancelar
-                </button>
-              </form>
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/app/${companySlug}/bookings/${booking.id}/reschedule`}
+                  className="text-xs text-gray-600 underline"
+                >
+                  reagendar
+                </Link>
+                <form action={cancelCompanyBookingAction.bind(null, companySlug, booking.id)}>
+                  <button type="submit" className="text-xs text-red-600 underline">
+                    cancelar
+                  </button>
+                </form>
+              </div>
             </li>
           ))}
         </ul>
