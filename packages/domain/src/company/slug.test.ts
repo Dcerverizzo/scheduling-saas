@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { slugify } from "./slug";
+import { isReservedSlug, slugify } from "./slug";
 
 describe("slugify", () => {
   it("lowercases and hyphenates spaces", () => {
@@ -16,5 +16,18 @@ describe("slugify", () => {
 
   it("collapses repeated separators", () => {
     expect(slugify("A   B---C")).toBe("a-b-c");
+  });
+});
+
+describe("isReservedSlug", () => {
+  it("flags reserved top-level route segments", () => {
+    expect(isReservedSlug("app")).toBe(true);
+    expect(isReservedSlug("login")).toBe(true);
+    expect(isReservedSlug("change-password")).toBe(true);
+  });
+
+  it("allows ordinary company slugs", () => {
+    expect(isReservedSlug("minha-empresa")).toBe(false);
+    expect(isReservedSlug("barbearia-do-joao")).toBe(false);
   });
 });

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@scheduling-saas/database";
-import { slugify } from "@scheduling-saas/domain";
+import { isReservedSlug, slugify } from "@scheduling-saas/domain";
 import { createCompanySchema } from "@scheduling-saas/validation";
 import { auth } from "@/auth";
 
@@ -24,7 +24,7 @@ export async function createCompanyAction(formData: FormData) {
   const baseSlug = slugify(parsed.data.name) || "empresa";
   let slug = baseSlug;
   let suffix = 1;
-  while (await prisma.company.findUnique({ where: { slug } })) {
+  while (isReservedSlug(slug) || (await prisma.company.findUnique({ where: { slug } }))) {
     suffix += 1;
     slug = `${baseSlug}-${suffix}`;
   }
