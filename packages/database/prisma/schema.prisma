@@ -54,6 +54,19 @@ enum NotificationStatus {
   FAILED
 }
 
+enum AvailabilityExceptionSource {
+  MANUAL
+  GOOGLE_CALENDAR
+}
+
+// ERROR cobre tanto token revogado (staff desconectou direto na conta Google) quanto qualquer
+// falha de sync persistente — dispara o banner "Google Calendar desconectado" no dashboard
+// (decisão 9 do design de Calendar no PRD) até o staff reconectar.
+enum GoogleCalendarConnectionStatus {
+  CONNECTED
+  ERROR
+}
+
 model User {
   id                 String    @id @default(uuid())
   name               String
@@ -138,14 +151,16 @@ model Company {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  members  CompanyMember[]
-  staff    StaffProfile[]
-  services               Service[]
-  availabilityRules      AvailabilityRule[]
-  availabilityExceptions AvailabilityException[]
-  bookings               Booking[]
-  bookingEvents          BookingEvent[]
-  notificationLogs       NotificationLog[]
+  members                   CompanyMember[]
+  staff                     StaffProfile[]
+  services                  Service[]
+  availabilityRules         AvailabilityRule[]
+  availabilityExceptions    AvailabilityException[]
+  bookings                  Booking[]
+  bookingEvents             BookingEvent[]
+  notificationLogs          NotificationLog[]
+  googleCalendarConnections GoogleCalendarConnection[]
+  bookingCalendarEvents     BookingCalendarEvent[]
 
   @@map("companies")
 }
@@ -178,12 +193,14 @@ model StaffProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  services     ServiceStaff[]
-  availabilityRules      AvailabilityRule[]
-  availabilityExceptions AvailabilityException[]
-  bookings               Booking[]
+  company                  Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services                 ServiceStaff[]
+  availabilityRules        AvailabilityRule[]
+  availabilityExceptions   AvailabilityException[]
+  bookings                 Booking[]
+  googleCalendarConnection GoogleCalendarConnection?
+  bookingCalendarEvents    BookingCalendarEvent[]
 
   @@unique([companyId, userId])
   @@index([companyId])
@@ -267,20 +284,29 @@ model AvailabilityRule {
 
 // startsAt/endsAt aqui SÃO instantes absolutos (UTC) — ao contrário da regra recorrente,
 // uma exceção é um evento pontual (ex: "de folga dia 25/12"), então já nasce em UTC.
+//
+// source/externalEventId existem pro sync inbound do Google Calendar (decisão 3 do design de
+// Calendar no PRD): em vez de um motor de disponibilidade novo, evento do Google que bloqueia a
+// agenda do staff vira uma exceção normal aqui, com source=GOOGLE_CALENDAR e externalEventId
+// apontando pro id do evento no Google — usado pra fazer diff a cada sync (criar/atualizar/apagar
+// a exceção correspondente sem tocar nas exceções MANUAL). getAvailableSlots() não muda.
 model AvailabilityException {
-  id        String                     @id @default(uuid())
-  companyId String
-  staffId   String
-  type      AvailabilityExceptionType
-  startsAt  DateTime
-  endsAt    DateTime
-  reason    String?
+  id              String                      @id @default(uuid())
+  companyId       String
+  staffId         String
+  type            AvailabilityExceptionType
+  startsAt        DateTime
+  endsAt          DateTime
+  reason          String?
+  source          AvailabilityExceptionSource @default(MANUAL)
+  externalEventId String?
 
   createdAt DateTime @default(now())
 
   company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
+  @@unique([staffId, externalEventId])
   @@index([staffId, startsAt])
   @@map("availability_exceptions")
 }
@@ -291,7 +317,7 @@ model AvailabilityException {
 // Prisma não representa isso no schema declarativo. Essa constraint é a última linha
 // de defesa; a checagem de disponibilidade na aplicação é a primeira.
 model Booking {
-  id         String   @id @default(uuid())
+  id         String @id @default(uuid())
   companyId  String
   customerId String
   staffId    String
@@ -315,12 +341,13 @@ model Booking {
   cancelledAt DateTime?
   completedAt DateTime?
 
-  company  Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  staff    StaffProfile    @relation(fields: [staffId], references: [id], onDelete: Restrict)
-  service  Service         @relation(fields: [serviceId], references: [id], onDelete: Restrict)
-  events   BookingEvent[]
+  company          Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer         CustomerProfile       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  staff            StaffProfile          @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  service          Service               @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  events           BookingEvent[]
   notificationLogs NotificationLog[]
+  calendarEvent    BookingCalendarEvent?
 
   @@index([companyId])
   @@index([staffId, startsAt])
@@ -378,4 +405,62 @@ model NotificationLog {
   @@index([bookingId])
   @@index([status, scheduledFor])
   @@map("notification_logs")
+}
+
+// Conexão OAuth de UM staff com o próprio Google Calendar pessoal (decisão 1 do design de
+// Calendar no PRD: por StaffProfile, não por Company — agenda pessoal é do profissional).
+// refreshToken é armazenado cifrado na camada de aplicação (não em texto plano) — o schema não
+// impõe isso, é responsabilidade de quem grava.
+// watchChannelId/watchResourceId/watchExpiresAt só existem depois do primeiro sync (que é quando
+// o channel de push notification do Google é criado); ficam null logo após o OAuth.
+model GoogleCalendarConnection {
+  id                 String                         @id @default(uuid())
+  companyId          String
+  staffId            String                         @unique
+  googleAccountEmail String
+  calendarId         String
+  refreshToken       String
+  scope              String
+  syncToken          String?
+  watchChannelId     String?
+  watchResourceId    String?
+  watchExpiresAt     DateTime?
+  status             GoogleCalendarConnectionStatus @default(CONNECTED)
+  lastSyncedAt       DateTime?
+  lastErrorAt        DateTime?
+  lastErrorMessage   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([watchExpiresAt])
+  @@map("google_calendar_connections")
+}
+
+// Rastreia o evento outbound (booking → Google) criado pro app poder atualizar/apagar depois,
+// mesmo papel que NotificationLog cumpre pro WhatsApp (decisão 2 do design de Calendar no PRD).
+// bookingId é único: reagendamento atualiza o mesmo evento no Google em vez de criar um novo,
+// espelhando a decisão 6 da Fase 1 (reagendamento atualiza o mesmo Booking, não cria um novo).
+model BookingCalendarEvent {
+  id            String @id @default(uuid())
+  companyId     String
+  staffId       String
+  bookingId     String @unique
+  googleEventId String
+  calendarId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  booking Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([staffId])
+  @@map("booking_calendar_events")
 }
