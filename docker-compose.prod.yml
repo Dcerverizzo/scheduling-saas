@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-scheduling}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scheduling}
+      POSTGRES_DB: ${POSTGRES_DB:-scheduling_saas}
+    volumes:
+      - scheduling_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scheduling} -d ${POSTGRES_DB:-scheduling_saas}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - scheduling_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  whatsapp-worker:
+    build:
+      context: .
+      dockerfile: apps/whatsapp-worker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - scheduling_whatsapp_session:/app/apps/whatsapp-worker/session
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  scheduling_postgres_data:
+  scheduling_redis_data:
+  scheduling_whatsapp_session:
