@@ -6,6 +6,7 @@ const LINKS = [
   { href: "staff", label: "Equipe" },
   { href: "services", label: "Serviços" },
   { href: "availability", label: "Disponibilidade" },
+  { href: "google-calendar", label: "Google Calendar" },
 ] as const;
 
 export function CompanyNav({ companySlug }: { companySlug: string }) {
