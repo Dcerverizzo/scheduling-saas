@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@scheduling-saas/database";
 import type { CompanyRole } from "@scheduling-saas/domain";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const credentialsSchema = z.object({
   email: z.email(),
@@ -22,6 +24,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: {},
       },
       authorize: async (raw) => {
+        const requestHeaders = await headers();
+        const ip = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+        const allowed = await checkRateLimit({ key: `login:${ip}`, limit: 10, windowSeconds: 60 });
+        if (!allowed) return null;
+
         const parsed = credentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 

@@ -6,7 +6,8 @@ export type DomainErrorCode =
   | "FORBIDDEN"
   | "COMPANY_NOT_FOUND"
   | "BOOKING_NOT_FOUND"
-  | "INVALID_BOOKING_STATE";
+  | "INVALID_BOOKING_STATE"
+  | "RATE_LIMITED";
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;

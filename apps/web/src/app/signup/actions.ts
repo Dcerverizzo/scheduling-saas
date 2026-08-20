@@ -2,13 +2,22 @@
 
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@scheduling-saas/database";
 import { normalizePhoneToE164 } from "@scheduling-saas/domain";
 import { customerSignupSchema } from "@scheduling-saas/validation";
 import { signIn } from "@/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function customerSignupAction(formData: FormData): Promise<{ error: string | null }> {
+  const requestHeaders = await headers();
+  const ip = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const allowed = await checkRateLimit({ key: `signup:${ip}`, limit: 5, windowSeconds: 60 });
+  if (!allowed) {
+    return { error: "Muitas tentativas. Tente novamente em instantes." };
+  }
+
   const next = formData.get("next");
   const nextPath = typeof next === "string" && next.startsWith("/") ? next : "/app";
 

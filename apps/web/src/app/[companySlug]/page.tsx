@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { DateTime } from "luxon";
 import { prisma, type Company, type Service, type StaffProfile } from "@scheduling-saas/database";
 import { formatCentsAsDecimalString } from "@scheduling-saas/domain";
 import { getSlotsForStaff } from "@/lib/booking/get-slots-for-staff";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 function qs(params: Record<string, string | undefined>): string {
   const search = new URLSearchParams();
@@ -206,7 +208,15 @@ async function TimeStep({
   companySlug: string;
   date: string;
 }) {
-  const slots = await getSlotsForStaff({ company, service, staff, date });
+  const requestHeaders = await headers();
+  const ip = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const allowed = await checkRateLimit({
+    key: `availability:${ip}:${company.id}`,
+    limit: 30,
+    windowSeconds: 60,
+  });
+
+  const slots = allowed ? await getSlotsForStaff({ company, service, staff, date }) : [];
 
   return (
     <section>
@@ -214,7 +224,11 @@ async function TimeStep({
         {staff.displayName} — {date}
       </p>
       <h2 className="mt-1 text-lg font-medium">Escolha o horário</h2>
-      {slots.length === 0 ? (
+      {!allowed ? (
+        <p className="mt-2 text-sm text-gray-600">
+          Muitas requisições, tente novamente em instantes.
+        </p>
+      ) : slots.length === 0 ? (
         <p className="mt-2 text-sm text-gray-600">Nenhum horário disponível nesse dia.</p>
       ) : (
         <ul className="mt-4 grid grid-cols-4 gap-2">

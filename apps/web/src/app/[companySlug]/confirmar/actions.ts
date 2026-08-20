@@ -9,6 +9,7 @@ import {
   enqueueBookingConfirmation,
   scheduleBookingReminders,
 } from "@/lib/notifications/enqueue-booking-notifications";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function confirmBookingAction(
   companySlug: string,
@@ -17,6 +18,15 @@ export async function confirmBookingAction(
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
+  }
+
+  const allowed = await checkRateLimit({
+    key: `create-booking:${session.user.id}`,
+    limit: 10,
+    windowSeconds: 60,
+  });
+  if (!allowed) {
+    return { error: "Muitas tentativas. Tente novamente em instantes." };
   }
 
   const serviceId = String(formData.get("serviceId") ?? "");

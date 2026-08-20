@@ -4,9 +4,17 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@scheduling-saas/database";
 import { requireCompanyContext } from "@/lib/company-context";
 import { cancelBooking } from "@/lib/booking/cancel-booking";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function cancelCompanyBookingAction(companySlug: string, bookingId: string) {
   const { userId, company, membership } = await requireCompanyContext(companySlug);
+
+  const allowed = await checkRateLimit({
+    key: `cancel-booking:${userId}`,
+    limit: 10,
+    windowSeconds: 60,
+  });
+  if (!allowed) return;
 
   const booking = await prisma.booking.findFirst({
     where: { id: bookingId, companyId: company.id },
