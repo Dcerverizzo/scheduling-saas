@@ -38,7 +38,19 @@ export async function syncInboundAvailability(connectionId: string): Promise<voi
   try {
     const accessToken = await getValidAccessToken(connection);
     const nextSyncToken = await syncAvailabilityExceptions(connection, accessToken);
-    await ensureWatchChannel(connection, accessToken);
+
+    try {
+      await ensureWatchChannel(connection, accessToken);
+    } catch (watchError) {
+      // Best-effort: o Google exige um endereço público (HTTPS) pro webhook — em dev
+      // local (AUTH_URL=http://localhost) isso SEMPRE falha, e não pode descartar um
+      // sync de disponibilidade que já funcionou. A reconciliação periódica cobre a
+      // falta de push notification enquanto o canal não existir.
+      console.error(
+        `[google-calendar-inbound-sync] falha ao garantir canal de watch da conexão ${connection.id}:`,
+        watchError,
+      );
+    }
 
     await prisma.googleCalendarConnection.update({
       where: { id: connection.id },
