@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
 import { customerSignupAction } from "./actions";
 
 const initialState = { error: null as string | null };
@@ -12,53 +13,55 @@ export function SignupForm({ next }: { next: string }) {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-6">
       {state.error ? (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{state.error}</p>
       ) : null}
       <input type="hidden" name="next" value={next} />
-      <label className="flex flex-col gap-1 text-sm">
-        Nome
-        <input type="text" name="name" required className="rounded-md border border-gray-300 px-3 py-2" />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        E-mail
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground" htmlFor="name">
+          Nome
+        </label>
+        <input id="name" type="text" name="name" required className="field-underline" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground" htmlFor="email">
+          E-mail
+        </label>
+        <input id="email" type="email" name="email" required autoComplete="email" className="field-underline" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground" htmlFor="phone">
+          Telefone (WhatsApp)
+        </label>
         <input
-          type="email"
-          name="email"
-          required
-          autoComplete="email"
-          className="rounded-md border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Telefone (WhatsApp)
-        <input
+          id="phone"
           type="tel"
           name="phone"
           required
           placeholder="17999999999"
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="field-underline font-mono-data"
         />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Senha
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground" htmlFor="password">
+          Senha
+        </label>
         <input
+          id="password"
           type="password"
           name="password"
           required
           minLength={8}
           autoComplete="new-password"
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="field-underline"
         />
-      </label>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      </div>
+
+      <Button type="submit" disabled={isPending} className="mt-1 h-11 text-[15px]">
         {isPending ? "Criando..." : "Criar conta"}
-      </button>
+      </Button>
     </form>
   );
 }

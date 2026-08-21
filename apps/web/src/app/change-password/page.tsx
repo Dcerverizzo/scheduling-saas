@@ -9,10 +9,10 @@ export default async function ChangePasswordPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-16">
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8 px-6 py-16">
       <div>
-        <h1 className="text-xl font-semibold">Defina sua senha</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <h1 className="text-2xl font-bold">Defina sua senha</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Você está usando uma senha temporária. Escolha uma nova senha para continuar.
         </p>
       </div>

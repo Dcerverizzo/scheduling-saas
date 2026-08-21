@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
 import { changePasswordAction } from "./actions";
 
 const initialState = { error: null as string | null };
@@ -12,40 +13,45 @@ export function ChangePasswordForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-6">
       {state.error ? (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{state.error}</p>
       ) : null}
 
-      <label className="flex flex-col gap-1 text-sm">
-        Nova senha
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground" htmlFor="password">
+          Nova senha
+        </label>
         <input
+          id="password"
           type="password"
           name="password"
           required
           minLength={8}
           autoComplete="new-password"
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="field-underline"
         />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Confirmar nova senha
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label
+          className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground"
+          htmlFor="confirmPassword"
+        >
+          Confirmar nova senha
+        </label>
         <input
+          id="confirmPassword"
           type="password"
           name="confirmPassword"
           required
           minLength={8}
           autoComplete="new-password"
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="field-underline"
         />
-      </label>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      </div>
+      <Button type="submit" disabled={isPending} className="mt-1 h-11 text-[15px]">
         {isPending ? "Salvando..." : "Salvar nova senha"}
-      </button>
+      </Button>
     </form>
   );
 }
