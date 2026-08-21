@@ -1,69 +1,89 @@
-import Image from "next/image";
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-6 pb-10">
+      <div className="flex items-center gap-2">
+        <span className="flex size-5 flex-col items-center justify-center gap-[3px] rounded-[5px] bg-foreground">
+          <span className="h-px w-3 bg-background" />
+          <span className="h-px w-3 bg-background" />
+          <span className="h-px w-3 bg-background" />
+        </span>
+        <span className="font-mono-data text-[13px] font-bold">agenda.app</span>
+      </div>
+
+      <div className="mt-9">
+        <span className="font-mono-data text-[11px] font-bold tracking-wide text-primary">
+          PARA BARBEARIAS, SALÕES E CLÍNICAS
+        </span>
+        <h1 className="mt-3.5 text-[33px] font-bold leading-[1.12] text-balance">
+          Agenda que confirma sozinha.
+        </h1>
+        <p className="mt-4 max-w-[33ch] text-[15.5px] leading-relaxed text-muted-foreground">
+          O cliente escolhe o horário. O WhatsApp confirma e lembra. Você só precisa aparecer pra
+          atender.
+        </p>
+      </div>
+
+      <div className="mt-7">
+        <div className="-rotate-1 overflow-hidden rounded-sm bg-card shadow-[0_14px_30px_-18px_rgba(35,36,31,0.35)]">
+          <div className="flex items-start justify-between gap-3 px-5 pt-4.5 pb-4">
+            <div>
+              <p className="font-mono-data text-[10px] tracking-wide text-muted-foreground">Nº 0417</p>
+              <p className="mt-1 text-base font-bold">Corte — Maria O.</p>
+              <p className="mt-0.5 text-[13px] text-muted-foreground">com João · Barbearia do João</p>
+            </div>
+            <span className="rotate-3 rounded bg-success-soft px-2 py-1 text-[10px] font-bold tracking-wide whitespace-nowrap text-success">
+              CONFIRMADO
+            </span>
+          </div>
+          <div className="ticket-perforation" />
+          <div className="font-mono-data flex justify-between px-5 pt-3.5 pb-4.5 text-[13px] text-muted-foreground">
+            <span>QUA 26/08</span>
+            <span className="font-bold text-foreground">14:00</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-2.5">
+        <Link href="/signup" className={buttonVariants({ className: "h-[52px] text-[15px]" })}>
+          Criar minha agenda grátis
+        </Link>
+        <Link href="/login" className="py-1.5 text-center text-[13.5px] text-muted-foreground">
+          Já tenho conta — <span className="font-medium text-primary">Entrar</span>
+        </Link>
+      </div>
+
+      <div className="mt-10 flex-1 border-t border-border pt-7">
+        <span className="font-mono-data text-[11px] font-bold tracking-wide text-muted-foreground">
+          COMO FUNCIONA
+        </span>
+        <ol className="mt-4 flex flex-col gap-5">
+          <li className="flex gap-3.5">
+            <span className="font-mono-data w-4 flex-none text-[13px] font-bold text-primary">1</span>
+            <p className="text-[14.5px] leading-relaxed">
+              Cliente agenda pelo link da sua empresa, sem baixar app nem criar conta até o fim.
+            </p>
+          </li>
+          <li className="flex gap-3.5">
+            <span className="font-mono-data w-4 flex-none text-[13px] font-bold text-primary">2</span>
+            <p className="text-[14.5px] leading-relaxed">
+              Confirmação e lembrete chegam sozinhos no WhatsApp — do cliente e da sua agenda.
+            </p>
+          </li>
+          <li className="flex gap-3.5">
+            <span className="font-mono-data w-4 flex-none text-[13px] font-bold text-primary">3</span>
+            <p className="text-[14.5px] leading-relaxed">
+              Dois clientes nunca caem no mesmo horário — o sistema garante, não a sorte.
+            </p>
+          </li>
+        </ol>
+      </div>
+
+      <div className="mt-6 border-t border-border pt-4">
+        <p className="text-xs text-muted-foreground">Feito para pequenos negócios de serviço no Brasil.</p>
+      </div>
+    </main>
   );
 }

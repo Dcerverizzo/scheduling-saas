@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { confirmBookingAction } from "./actions";
 
 const initialState = { error: null as string | null };
@@ -28,19 +29,15 @@ export function ConfirmBookingForm({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {state.error ? (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{state.error}</p>
       ) : null}
       <input type="hidden" name="serviceId" value={serviceId} />
       <input type="hidden" name="staffId" value={staffId} />
       <input type="hidden" name="startsAt" value={startsAt} />
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {isPending ? "Confirmando..." : "Confirmar agendamento"}
-      </button>
+      <Button type="submit" variant="stamp" disabled={isPending} className="h-12 text-[15.5px] font-bold">
+        {isPending ? "Confirmando..." : "Confirmar horário"}
+      </Button>
     </form>
   );
 }

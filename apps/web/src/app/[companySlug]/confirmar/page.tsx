@@ -32,34 +32,50 @@ export default async function ConfirmBookingPage({
   if (!service || !staff) notFound();
 
   const startDate = new Date(startsAt);
-  const localTime = startDate.toLocaleString("pt-BR", { timeZone: company.timezone });
+  const localDate = startDate.toLocaleDateString("pt-BR", { timeZone: company.timezone });
+  const localTime = startDate.toLocaleTimeString("pt-BR", {
+    timeZone: company.timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-16">
-      <h1 className="text-xl font-semibold">Confirmar agendamento</h1>
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-6 pt-6 pb-12">
+      <h1 className="text-lg font-bold">Confirmar agendamento</h1>
 
-      <dl className="flex flex-col gap-2 rounded-md border border-gray-200 px-4 py-3 text-sm">
-        <div className="flex justify-between">
-          <dt className="text-gray-500">Empresa</dt>
-          <dd>{company.name}</dd>
+      <div className="overflow-hidden rounded-md bg-card shadow-[0_16px_34px_-20px_rgba(35,36,31,0.4)]">
+        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4">
+          <div>
+            <p className="font-mono-data text-[10.5px] tracking-wide text-muted-foreground">TICKET</p>
+            <p className="mt-1.5 text-lg font-bold">{company.name}</p>
+          </div>
+          <span className="flex size-8 flex-none items-center justify-center rounded-full bg-foreground text-background">
+            ✓
+          </span>
         </div>
-        <div className="flex justify-between">
-          <dt className="text-gray-500">Serviço</dt>
-          <dd>{service.name}</dd>
+
+        <div className="ticket-perforation" />
+
+        <dl className="flex flex-col gap-0 px-5">
+          <TicketRow label="Serviço" value={service.name} />
+          <TicketRow label="Profissional" value={staff.displayName} />
+          <TicketRow label="Quando" value={`${localDate} · ${localTime}`} mono />
+          <TicketRow label="Duração" value={`${service.durationMinutes} min`} mono />
+          <TicketRow
+            label="Valor"
+            value={`R$ ${formatCentsAsDecimalString(service.priceInCents)}`}
+            last
+            big
+          />
+        </dl>
+
+        <div className="ticket-perforation" />
+
+        <div className="flex items-center justify-between px-5 pt-3.5 pb-5">
+          <span className="font-mono-data text-[11px] text-muted-foreground">EMITIDO PARA</span>
+          <span className="text-[13.5px] font-semibold">{session.user.name}</span>
         </div>
-        <div className="flex justify-between">
-          <dt className="text-gray-500">Profissional</dt>
-          <dd>{staff.displayName}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-gray-500">Quando</dt>
-          <dd>{localTime}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-gray-500">Preço</dt>
-          <dd>R$ {formatCentsAsDecimalString(service.priceInCents)}</dd>
-        </div>
-      </dl>
+      </div>
 
       <ConfirmBookingForm
         companySlug={companySlug}
@@ -67,6 +83,36 @@ export default async function ConfirmBookingPage({
         staffId={staff.id}
         startsAt={startDate.toISOString()}
       />
+
+      <p className="flex items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
+        <span className="mt-0.5 flex size-4 flex-none items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-primary">
+          ✓
+        </span>
+        A confirmação e o lembrete chegam no seu WhatsApp — não precisa guardar print.
+      </p>
     </main>
+  );
+}
+
+function TicketRow({
+  label,
+  value,
+  mono,
+  big,
+  last,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  big?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <div className={`flex items-baseline justify-between py-2.5 ${last ? "" : "border-b border-dotted border-border"}`}>
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className={`text-right font-semibold ${mono ? "font-mono-data" : ""} ${big ? "text-[17px]" : "text-sm"}`}>
+        {value}
+      </dd>
+    </div>
   );
 }

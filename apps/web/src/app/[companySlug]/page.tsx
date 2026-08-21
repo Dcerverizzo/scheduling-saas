@@ -6,6 +6,8 @@ import { prisma, type Company, type Service, type StaffProfile } from "@scheduli
 import { formatCentsAsDecimalString } from "@scheduling-saas/domain";
 import { getSlotsForStaff } from "@/lib/booking/get-slots-for-staff";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 function qs(params: Record<string, string | undefined>): string {
   const search = new URLSearchParams();
@@ -14,6 +16,29 @@ function qs(params: Record<string, string | undefined>): string {
   }
   const str = search.toString();
   return str ? `?${str}` : "";
+}
+
+const STEPS = ["Serviço", "Profissional", "Data", "Horário"] as const;
+
+function Stepper({ current }: { current: number }) {
+  return (
+    <div className="font-mono-data flex flex-wrap items-center gap-1.5 text-[10.5px] tracking-wide">
+      {STEPS.map((label, index) => (
+        <span key={label} className="flex items-center gap-1.5">
+          {index > 0 ? <span className="text-border">→</span> : null}
+          <span
+            className={
+              index === current
+                ? "border-b-2 border-primary pb-2 font-bold text-foreground"
+                : "pb-2 text-muted-foreground"
+            }
+          >
+            {label.toUpperCase()}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
 }
 
 export default async function PublicCompanyPage({
@@ -45,32 +70,38 @@ export default async function PublicCompanyPage({
       : null;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-16">
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-6 pb-10">
       <div>
-        <h1 className="text-xl font-semibold">{company.name}</h1>
+        <h1 className="text-[17px] font-bold">{company.name}</h1>
         {company.addressLine1 ? (
-          <p className="text-sm text-gray-500">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {company.addressLine1}
             {company.city ? `, ${company.city}` : ""}
           </p>
         ) : null}
       </div>
 
-      {!service ? (
-        <ServiceStep companyId={company.id} companySlug={companySlug} />
-      ) : !staff ? (
-        <StaffStep companyId={company.id} companySlug={companySlug} service={service} />
-      ) : !date ? (
-        <DateStep companySlug={companySlug} serviceId={service.id} staffId={staff.id} />
-      ) : (
-        <TimeStep
-          company={company}
-          service={service}
-          staff={staff}
-          companySlug={companySlug}
-          date={date}
-        />
-      )}
+      <div className="mt-6 border-b border-border pb-0">
+        <Stepper current={!service ? 0 : !staff ? 1 : !date ? 2 : 3} />
+      </div>
+
+      <div className="mt-6">
+        {!service ? (
+          <ServiceStep companyId={company.id} companySlug={companySlug} />
+        ) : !staff ? (
+          <StaffStep companyId={company.id} companySlug={companySlug} service={service} />
+        ) : !date ? (
+          <DateStep companySlug={companySlug} serviceId={service.id} staffId={staff.id} />
+        ) : (
+          <TimeStep
+            company={company}
+            service={service}
+            staff={staff}
+            companySlug={companySlug}
+            date={date}
+          />
+        )}
+      </div>
     </main>
   );
 }
@@ -89,19 +120,19 @@ async function ServiceStep({
 
   return (
     <section>
-      <h2 className="text-lg font-medium">Escolha o serviço</h2>
+      <h2 className="text-lg font-bold">Escolha o serviço</h2>
       {services.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-600">Nenhum serviço disponível no momento.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Nenhum serviço disponível no momento.</p>
       ) : (
-        <ul className="mt-4 flex flex-col gap-2">
+        <ul className="mt-4 flex flex-col gap-2.5">
           {services.map((service) => (
             <li key={service.id}>
               <Link
                 href={`/${companySlug}${qs({ serviceId: service.id })}`}
-                className="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3 hover:border-gray-400"
+                className="flex items-center justify-between rounded-md border border-border bg-card px-4 py-3.5 hover:border-primary"
               >
-                <span>{service.name}</span>
-                <span className="text-sm text-gray-500">
+                <span className="text-[15px] font-medium">{service.name}</span>
+                <span className="font-mono-data text-sm text-muted-foreground">
                   {service.durationMinutes}min · R$ {formatCentsAsDecimalString(service.priceInCents)}
                 </span>
               </Link>
@@ -129,17 +160,17 @@ async function StaffStep({
 
   return (
     <section>
-      <p className="text-sm text-gray-500">Serviço: {service.name}</p>
-      <h2 className="mt-1 text-lg font-medium">Escolha o profissional</h2>
+      <p className="text-sm text-muted-foreground">Serviço: {service.name}</p>
+      <h2 className="mt-1 text-lg font-bold">Escolha o profissional</h2>
       {staffLinks.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-600">Nenhum profissional disponível pra esse serviço.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Nenhum profissional disponível pra esse serviço.</p>
       ) : (
-        <ul className="mt-4 flex flex-col gap-2">
+        <ul className="mt-4 flex flex-col gap-2.5">
           {staffLinks.map((link) => (
             <li key={link.staffId}>
               <Link
                 href={`/${companySlug}${qs({ serviceId: service.id, staffId: link.staffId })}`}
-                className="block rounded-md border border-gray-200 px-4 py-3 hover:border-gray-400"
+                className="block rounded-md border border-border bg-card px-4 py-3.5 text-[15px] font-medium hover:border-primary"
               >
                 {link.staff.displayName}
               </Link>
@@ -147,7 +178,7 @@ async function StaffStep({
           ))}
         </ul>
       )}
-      <Link href={`/${companySlug}`} className="mt-4 inline-block text-sm underline">
+      <Link href={`/${companySlug}`} className="mt-5 inline-block text-sm text-muted-foreground hover:underline">
         ← trocar serviço
       </Link>
     </section>
@@ -167,27 +198,21 @@ function DateStep({
 
   return (
     <section>
-      <h2 className="text-lg font-medium">Escolha a data</h2>
-      <form action={`/${companySlug}`} method="get" className="mt-4 flex items-end gap-4">
+      <h2 className="text-lg font-bold">Escolha a data</h2>
+      <form action={`/${companySlug}`} method="get" className="mt-4 flex items-end gap-3">
         <input type="hidden" name="serviceId" value={serviceId} />
         <input type="hidden" name="staffId" value={staffId} />
-        <label className="flex flex-col gap-1 text-sm">
-          Data
-          <input
-            type="date"
-            name="date"
-            required
-            min={today ?? undefined}
-            className="rounded-md border border-gray-300 px-3 py-2"
-          />
-        </label>
-        <button type="submit" className="rounded-md bg-gray-900 px-3 py-2 text-sm text-white">
-          Ver horários
-        </button>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium" htmlFor="date">
+            Data
+          </label>
+          <Input id="date" type="date" name="date" required min={today ?? undefined} className="font-mono-data" />
+        </div>
+        <Button type="submit">Ver horários</Button>
       </form>
       <Link
         href={`/${companySlug}${qs({ serviceId })}`}
-        className="mt-4 inline-block text-sm underline"
+        className="mt-5 inline-block text-sm text-muted-foreground hover:underline"
       >
         ← trocar profissional
       </Link>
@@ -220,18 +245,16 @@ async function TimeStep({
 
   return (
     <section>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         {staff.displayName} — {date}
       </p>
-      <h2 className="mt-1 text-lg font-medium">Escolha o horário</h2>
+      <h2 className="mt-1 text-lg font-bold">Escolha o horário</h2>
       {!allowed ? (
-        <p className="mt-2 text-sm text-gray-600">
-          Muitas requisições, tente novamente em instantes.
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">Muitas requisições, tente novamente em instantes.</p>
       ) : slots.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-600">Nenhum horário disponível nesse dia.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Nenhum horário disponível nesse dia.</p>
       ) : (
-        <ul className="mt-4 grid grid-cols-4 gap-2">
+        <ul className="mt-4 grid grid-cols-3 gap-2">
           {slots.map((slot) => {
             const localTime = slot.toLocaleTimeString("pt-BR", {
               timeZone: company.timezone,
@@ -246,7 +269,7 @@ async function TimeStep({
                     staffId: staff.id,
                     startsAt: slot.toISOString(),
                   })}`}
-                  className="block rounded-md border border-gray-200 px-3 py-2 text-center text-sm hover:border-gray-400"
+                  className="font-mono-data block rounded-md border border-border bg-card py-2.5 text-center text-sm font-semibold hover:border-primary hover:text-primary"
                 >
                   {localTime}
                 </Link>
@@ -257,7 +280,7 @@ async function TimeStep({
       )}
       <Link
         href={`/${companySlug}${qs({ serviceId: service.id, staffId: staff.id })}`}
-        className="mt-4 inline-block text-sm underline"
+        className="mt-5 inline-block text-sm text-muted-foreground hover:underline"
       >
         ← trocar data
       </Link>
