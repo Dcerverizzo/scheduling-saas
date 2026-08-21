@@ -8,11 +8,11 @@ export function RescheduleSlotGrid({
   action: (startsAtIso: string) => Promise<void>;
 }) {
   if (slots.length === 0) {
-    return <p className="mt-2 text-sm text-gray-600">Nenhum horário disponível nesse dia.</p>;
+    return <p className="mt-3 text-sm text-muted-foreground">Nenhum horário disponível nesse dia.</p>;
   }
 
   return (
-    <ul className="mt-4 grid grid-cols-4 gap-2">
+    <ul className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
       {slots.map((slot) => {
         const iso = slot.toISOString();
         const localTime = slot.toLocaleTimeString("pt-BR", {
@@ -25,7 +25,7 @@ export function RescheduleSlotGrid({
             <form action={action.bind(null, iso)}>
               <button
                 type="submit"
-                className="block w-full rounded-md border border-gray-200 px-3 py-2 text-center text-sm hover:border-gray-400"
+                className="font-mono-data block w-full rounded-md border border-border bg-card py-2.5 text-center text-sm font-semibold hover:border-primary hover:text-primary"
               >
                 {localTime}
               </button>

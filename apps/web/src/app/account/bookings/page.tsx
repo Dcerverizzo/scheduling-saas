@@ -30,42 +30,45 @@ export default async function MyBookingsPage({ searchParams }: PageProps<"/accou
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-4 py-16">
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-10 px-6 py-12">
       {confirmed ? (
-        <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
+        <p className="rounded-md bg-success-soft px-3 py-2.5 text-sm text-success">
           Agendamento confirmado!
         </p>
       ) : null}
 
       <section>
-        <h1 className="text-xl font-semibold">Meus agendamentos</h1>
+        <h1 className="text-xl font-bold">Meus agendamentos</h1>
+
         {upcoming.length === 0 ? (
-          <p className="mt-2 text-sm text-gray-600">Nenhum agendamento futuro.</p>
+          <p className="mt-3 text-sm text-muted-foreground">Nenhum agendamento futuro.</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {upcoming.map((booking) => (
               <li
                 key={booking.id}
-                className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-3 text-sm"
+                className="relative overflow-hidden rounded-md bg-card py-4 pr-4 pl-5 shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-3.5 before:border-r before:border-dashed before:border-border before:[background-image:radial-gradient(circle_3px,var(--background)_3px,transparent_3.5px)] before:[background-position:center_0] before:[background-size:14px_14px]"
               >
-                <div>
-                  <p className="font-medium">
-                    {booking.company.name} — {booking.serviceNameSnapshot}
-                  </p>
-                  <p className="text-gray-500">
-                    {booking.startsAt.toLocaleString("pt-BR", { timeZone: booking.company.timezone })} · R${" "}
-                    {formatCentsAsDecimalString(booking.servicePriceSnapshot)}
-                  </p>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[15px] font-semibold">
+                      {booking.serviceNameSnapshot} — {booking.company.name}
+                    </p>
+                    <p className="font-mono-data mt-1 text-xs text-muted-foreground">
+                      {booking.startsAt.toLocaleString("pt-BR", { timeZone: booking.company.timezone })} · R${" "}
+                      {formatCentsAsDecimalString(booking.servicePriceSnapshot)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="mt-2.5 flex gap-4">
                   <Link
                     href={`/account/bookings/${booking.id}/reschedule`}
-                    className="text-xs text-gray-600 underline"
+                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
                   >
                     reagendar
                   </Link>
                   <form action={cancelMyBookingAction.bind(null, booking.id)}>
-                    <button type="submit" className="text-xs text-red-600 underline">
+                    <button type="submit" className="text-xs text-destructive underline underline-offset-2">
                       cancelar
                     </button>
                   </form>
@@ -77,16 +80,26 @@ export default async function MyBookingsPage({ searchParams }: PageProps<"/accou
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold">Histórico</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Histórico</h2>
         {history.length === 0 ? (
-          <p className="mt-2 text-sm text-gray-600">Nenhum agendamento anterior.</p>
+          <p className="mt-3 text-sm text-muted-foreground">Nenhum agendamento anterior.</p>
         ) : (
-          <ul className="mt-4 flex flex-col gap-2">
+          <ul className="mt-3 flex flex-col">
             {history.map((booking) => (
-              <li key={booking.id} className="rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-500">
-                {booking.company.name} — {booking.serviceNameSnapshot} —{" "}
-                {booking.startsAt.toLocaleString("pt-BR", { timeZone: booking.company.timezone })} —{" "}
-                {booking.status}
+              <li
+                key={booking.id}
+                className={`flex items-center justify-between gap-3 border-b border-dotted border-border py-2.5 text-sm ${
+                  booking.status === "CANCELLED" ? "text-muted-foreground/60 line-through" : "text-muted-foreground"
+                }`}
+              >
+                <span>
+                  {booking.company.name} — {booking.serviceNameSnapshot}
+                </span>
+                <span className="font-mono-data flex-none">
+                  {booking.status === "CANCELLED"
+                    ? "CANCELADO"
+                    : booking.startsAt.toLocaleDateString("pt-BR", { timeZone: booking.company.timezone })}
+                </span>
               </li>
             ))}
           </ul>
