@@ -9,7 +9,6 @@ import { updateCompanyAction } from "./actions";
 type CompanyFields = {
   name: string;
   phone: string | null;
-  timezone: string;
   addressLine1: string | null;
   city: string | null;
   state: string | null;
@@ -44,16 +43,6 @@ export function UpdateCompanyForm({
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="phone">Telefone (WhatsApp)</Label>
         <Input id="phone" name="phone" type="tel" className="font-mono-data" defaultValue={company.phone ?? ""} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="timezone">Fuso horário (IANA)</Label>
-        <Input
-          id="timezone"
-          name="timezone"
-          required
-          className="font-mono-data"
-          defaultValue={company.timezone}
-        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="addressLine1">Endereço</Label>

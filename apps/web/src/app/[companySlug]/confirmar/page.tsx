@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@scheduling-saas/database";
 import { formatCentsAsDecimalString } from "@scheduling-saas/domain";
 import { auth } from "@/auth";
@@ -41,6 +42,12 @@ export default async function ConfirmBookingPage({
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-6 pt-6 pb-12">
+      <Link
+        href={`/${companySlug}?serviceId=${service.id}&staffId=${staff.id}`}
+        className="text-sm text-muted-foreground hover:text-foreground"
+      >
+        ← trocar horário
+      </Link>
       <h1 className="text-lg font-bold">Confirmar agendamento</h1>
 
       <div className="overflow-hidden rounded-md bg-card shadow-[0_16px_34px_-20px_rgba(35,36,31,0.4)]">

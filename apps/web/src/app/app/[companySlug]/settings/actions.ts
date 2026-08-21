@@ -11,7 +11,6 @@ export async function updateCompanyAction(companySlug: string, formData: FormDat
   const parsed = updateCompanySchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone") || undefined,
-    timezone: formData.get("timezone"),
     addressLine1: formData.get("addressLine1") || undefined,
     addressLine2: formData.get("addressLine2") || undefined,
     city: formData.get("city") || undefined,

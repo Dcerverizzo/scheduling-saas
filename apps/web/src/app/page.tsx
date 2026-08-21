@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-6 pb-10">
-      <div className="flex items-center gap-2">
-        <span className="flex size-5 flex-col items-center justify-center gap-[3px] rounded-[5px] bg-foreground">
-          <span className="h-px w-3 bg-background" />
-          <span className="h-px w-3 bg-background" />
-          <span className="h-px w-3 bg-background" />
-        </span>
-        <span className="font-mono-data text-[13px] font-bold">agenda.app</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="flex size-5 flex-col items-center justify-center gap-[3px] rounded-[5px] bg-foreground">
+            <span className="h-px w-3 bg-background" />
+            <span className="h-px w-3 bg-background" />
+            <span className="h-px w-3 bg-background" />
+          </span>
+          <span className="font-mono-data text-[13px] font-bold">agenda.app</span>
+        </div>
+        <ThemeToggle />
       </div>
 
       <div className="mt-9">

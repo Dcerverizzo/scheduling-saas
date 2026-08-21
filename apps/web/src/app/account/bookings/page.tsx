@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@scheduling-saas/database";
 import { formatCentsAsDecimalString } from "@scheduling-saas/domain";
 import { requireSession } from "@/lib/session";
+import { AccountHeader } from "@/components/account-header";
 import { cancelMyBookingAction } from "./actions";
 
 export default async function MyBookingsPage({ searchParams }: PageProps<"/account/bookings">) {
@@ -30,7 +31,9 @@ export default async function MyBookingsPage({ searchParams }: PageProps<"/accou
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-10 px-6 py-12">
+    <>
+      <AccountHeader />
+      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-10 px-6 py-12">
       {confirmed ? (
         <p className="rounded-md bg-success-soft px-3 py-2.5 text-sm text-success">
           Agendamento confirmado!
@@ -105,6 +108,7 @@ export default async function MyBookingsPage({ searchParams }: PageProps<"/accou
           </ul>
         )}
       </section>
-    </main>
+      </main>
+    </>
   );
 }
