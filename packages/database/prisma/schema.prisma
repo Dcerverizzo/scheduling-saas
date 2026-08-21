@@ -67,15 +67,21 @@ enum GoogleCalendarConnectionStatus {
   ERROR
 }
 
+// email/passwordHash são opcionais por causa do agendamento sem conta (Fase 2):
+// um User "convidado" (isGuest=true) nasce só com nome+telefone, sem credencial
+// nenhuma — nunca consegue logar via Credentials (authorize() exige
+// passwordHash). Unique em email continua valendo com múltiplos NULL (Postgres
+// permite), mesmo padrão já usado em Booking.idempotencyKey.
 model User {
   id                 String    @id @default(uuid())
   name               String
-  email              String    @unique
+  email              String?   @unique
   emailVerifiedAt    DateTime?
   phone              String?
   phoneVerifiedAt    DateTime?
-  passwordHash       String
+  passwordHash       String?
   mustChangePassword Boolean   @default(false)
+  isGuest            Boolean   @default(false)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

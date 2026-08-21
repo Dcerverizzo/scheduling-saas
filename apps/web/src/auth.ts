@@ -35,7 +35,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email },
         });
-        if (!user || user.deletedAt) return null;
+        // !user.passwordHash cobre o User "convidado" do agendamento sem conta
+        // (Fase 2) — nasce sem credencial nenhuma, nunca pode logar por aqui.
+        if (!user || user.deletedAt || !user.passwordHash) return null;
 
         const passwordMatches = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!passwordMatches) return null;

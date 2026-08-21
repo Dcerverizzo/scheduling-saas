@@ -50,6 +50,7 @@ export default async function PublicCompanyPage({
   const serviceId = typeof search.serviceId === "string" ? search.serviceId : undefined;
   const staffId = typeof search.staffId === "string" ? search.staffId : undefined;
   const date = typeof search.date === "string" ? search.date : undefined;
+  const confirmed = typeof search.confirmed === "string" ? search.confirmed : undefined;
 
   const company = await prisma.company.findUnique({ where: { slug: companySlug } });
   if (!company || company.deletedAt) {
@@ -71,6 +72,11 @@ export default async function PublicCompanyPage({
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-6 pb-10">
+      {confirmed ? (
+        <p className="mb-5 rounded-md bg-success-soft px-3 py-2.5 text-sm text-success">
+          Agendamento confirmado! Você vai receber a confirmação no WhatsApp.
+        </p>
+      ) : null}
       <div>
         <h1 className="text-[17px] font-bold">{company.name}</h1>
         {company.addressLine1 ? (

@@ -4,6 +4,7 @@ import { prisma } from "@scheduling-saas/database";
 import { formatCentsAsDecimalString } from "@scheduling-saas/domain";
 import { auth } from "@/auth";
 import { ConfirmBookingForm } from "./ConfirmBookingForm";
+import { GuestBookingForm } from "./GuestBookingForm";
 
 export default async function ConfirmBookingPage({
   params,
@@ -20,10 +21,6 @@ export default async function ConfirmBookingPage({
   }
 
   const session = await auth();
-  if (!session?.user) {
-    const next = `/${companySlug}/confirmar?serviceId=${serviceId}&staffId=${staffId}&startsAt=${encodeURIComponent(startsAt)}`;
-    redirect(`/signup?next=${encodeURIComponent(next)}`);
-  }
 
   const company = await prisma.company.findUnique({ where: { slug: companySlug } });
   if (!company) notFound();
@@ -39,6 +36,9 @@ export default async function ConfirmBookingPage({
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  // Preserva a seleção pra quem decidir entrar/criar conta em vez de continuar sem ela.
+  const nextPath = `/${companySlug}/confirmar?serviceId=${service.id}&staffId=${staff.id}&startsAt=${encodeURIComponent(startDate.toISOString())}`;
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-6 pt-6 pb-12">
@@ -71,25 +71,60 @@ export default async function ConfirmBookingPage({
           <TicketRow
             label="Valor"
             value={`R$ ${formatCentsAsDecimalString(service.priceInCents)}`}
-            last
+            last={!session?.user}
             big
           />
         </dl>
 
-        <div className="ticket-perforation" />
-
-        <div className="flex items-center justify-between px-5 pt-3.5 pb-5">
-          <span className="font-mono-data text-[11px] text-muted-foreground">EMITIDO PARA</span>
-          <span className="text-[13.5px] font-semibold">{session.user.name}</span>
-        </div>
+        {session?.user ? (
+          <>
+            <div className="ticket-perforation" />
+            <div className="flex items-center justify-between px-5 pt-3.5 pb-5">
+              <span className="font-mono-data text-[11px] text-muted-foreground">EMITIDO PARA</span>
+              <span className="text-[13.5px] font-semibold">{session.user.name}</span>
+            </div>
+          </>
+        ) : (
+          <div className="pb-4" />
+        )}
       </div>
 
-      <ConfirmBookingForm
-        companySlug={companySlug}
-        serviceId={service.id}
-        staffId={staff.id}
-        startsAt={startDate.toISOString()}
-      />
+      {session?.user ? (
+        <ConfirmBookingForm
+          companySlug={companySlug}
+          serviceId={service.id}
+          staffId={staff.id}
+          startsAt={startDate.toISOString()}
+        />
+      ) : (
+        <>
+          <GuestBookingForm
+            companySlug={companySlug}
+            serviceId={service.id}
+            staffId={staff.id}
+            startsAt={startDate.toISOString()}
+          />
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">ou</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <div className="flex justify-center gap-5 text-sm">
+            <Link
+              href={`/login?next=${encodeURIComponent(nextPath)}`}
+              className="text-primary underline underline-offset-2"
+            >
+              Já tenho conta
+            </Link>
+            <Link
+              href={`/signup?next=${encodeURIComponent(nextPath)}`}
+              className="text-primary underline underline-offset-2"
+            >
+              Criar conta
+            </Link>
+          </div>
+        </>
+      )}
 
       <p className="flex items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
         <span className="mt-0.5 flex size-4 flex-none items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-primary">
