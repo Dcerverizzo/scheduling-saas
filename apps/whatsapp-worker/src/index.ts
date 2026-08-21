@@ -2,12 +2,14 @@ import "./env";
 import { Worker } from "bullmq";
 import {
   BOOKING_REMINDERS_QUEUE,
+  GOOGLE_CALENDAR_INBOUND_SYNC_QUEUE,
   GOOGLE_CALENDAR_SYNC_QUEUE,
   NOTIFICATIONS_QUEUE,
   redisConnection,
 } from "@scheduling-saas/queue";
 import type {
   BookingReminderJobData,
+  GoogleCalendarInboundSyncJobData,
   GoogleCalendarSyncJobData,
   SendNotificationJobData,
 } from "@scheduling-saas/queue";
@@ -15,7 +17,8 @@ import { ConsoleNotificationProvider, type NotificationProvider } from "@schedul
 import { sendAndLog } from "./notification-sender";
 import { processBookingReminderJob } from "./process-booking-reminder";
 import { processGoogleCalendarSyncJob } from "./google-calendar-sync";
-import { reconcileMissingConfirmations } from "./reconciliation";
+import { syncInboundAvailability } from "./google-calendar-inbound-sync";
+import { reconcileGoogleCalendarConnections, reconcileMissingConfirmations } from "./reconciliation";
 import { startWhatsAppConnection } from "./whatsapp-connection";
 import { BaileysNotificationProvider } from "./baileys-notification-provider";
 
@@ -60,7 +63,20 @@ const googleCalendarSyncWorker = new Worker<GoogleCalendarSyncJobData>(
   { connection: redisConnection },
 );
 
-for (const worker of [notificationsWorker, bookingRemindersWorker, googleCalendarSyncWorker]) {
+const googleCalendarInboundSyncWorker = new Worker<GoogleCalendarInboundSyncJobData>(
+  GOOGLE_CALENDAR_INBOUND_SYNC_QUEUE,
+  async (job) => {
+    await syncInboundAvailability(job.data.connectionId);
+  },
+  { connection: redisConnection },
+);
+
+for (const worker of [
+  notificationsWorker,
+  bookingRemindersWorker,
+  googleCalendarSyncWorker,
+  googleCalendarInboundSyncWorker,
+]) {
   worker.on("completed", (job) => {
     console.log(`[whatsapp-worker] job ${job.id} (${worker.name}) concluído`);
   });
@@ -76,17 +92,30 @@ const reconciliationTimer = setInterval(() => {
   });
 }, RECONCILIATION_INTERVAL_MS);
 
+// Intervalo bem mais folgado que o de notificações — canal de watch do Google
+// dura até ~1 mês, não precisa de granularidade de 5 min; isso aqui é rede de
+// segurança pra webhook perdido, não o caminho principal de sync.
+const GOOGLE_CALENDAR_RECONCILIATION_INTERVAL_MS = 30 * 60_000;
+const googleCalendarReconciliationTimer = setInterval(() => {
+  reconcileGoogleCalendarConnections().catch((error) => {
+    console.error("[whatsapp-worker] falha na reconciliação do Google Calendar:", error);
+  });
+}, GOOGLE_CALENDAR_RECONCILIATION_INTERVAL_MS);
+
 console.log(
-  "[whatsapp-worker] booted — consumindo filas 'notifications', 'booking-reminders' e 'google-calendar-sync'",
+  "[whatsapp-worker] booted — consumindo filas 'notifications', 'booking-reminders', " +
+    "'google-calendar-sync' e 'google-calendar-inbound-sync'",
 );
 
 process.on("SIGTERM", () => {
   console.log("[whatsapp-worker] received SIGTERM, shutting down");
   clearInterval(reconciliationTimer);
+  clearInterval(googleCalendarReconciliationTimer);
   Promise.all([
     notificationsWorker.close(),
     bookingRemindersWorker.close(),
     googleCalendarSyncWorker.close(),
+    googleCalendarInboundSyncWorker.close(),
   ])
     .then(() => process.exit(0))
     .catch(() => process.exit(1));

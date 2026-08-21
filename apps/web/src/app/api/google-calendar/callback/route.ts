@@ -13,6 +13,7 @@ import {
   getGoogleCalendarRedirectUri,
   getGoogleOAuthConfig,
 } from "@/lib/google-calendar/env";
+import { enqueueGoogleCalendarInboundSync } from "@/lib/google-calendar/enqueue-inbound-sync";
 import { OAUTH_STATE_COOKIE } from "../connect/route";
 
 function redirectToCalendarPage(request: NextRequest, companySlug: string, error?: string) {
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
     const googleAccountEmail = await fetchGoogleAccountEmail(tokens.accessToken);
     const encryptedRefreshToken = encryptToken(tokens.refreshToken, encryptionKey);
 
-    await prisma.googleCalendarConnection.upsert({
+    const connection = await prisma.googleCalendarConnection.upsert({
       where: { staffId },
       create: {
         companyId: staff.companyId,
@@ -113,6 +114,9 @@ export async function GET(request: NextRequest) {
         lastErrorMessage: null,
       },
     });
+
+    // Fora do fluxo síncrono — se falhar, a reconciliação periódica cobre.
+    await enqueueGoogleCalendarInboundSync(connection.id);
 
     return redirectToCalendarPage(request, companySlug);
   } catch (error) {

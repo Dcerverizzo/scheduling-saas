@@ -4,24 +4,11 @@ import type { GoogleCalendarSyncJobData } from "@scheduling-saas/queue";
 import {
   buildBookingEventBody,
   createCalendarEvent,
-  decryptToken,
   deleteCalendarEvent,
   GoogleCalendarEventNotFoundError,
-  refreshAccessToken,
   updateCalendarEvent,
 } from "@scheduling-saas/calendar";
-
-function getGoogleOAuthEnv(): { clientId: string; clientSecret: string; encryptionKey: string } {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const encryptionKey = process.env.GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY;
-  if (!clientId || !clientSecret || !encryptionKey) {
-    throw new Error(
-      "GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET/GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY não configurados no worker.",
-    );
-  }
-  return { clientId, clientSecret, encryptionKey };
-}
+import { getValidAccessToken } from "./google-calendar-auth";
 
 // Mesma filosofia do processBookingReminderJob: reconfere o estado ATUAL do booking no
 // momento do processamento, nunca confia na intenção capturada quando o job foi
@@ -45,9 +32,7 @@ export async function processGoogleCalendarSyncJob(data: GoogleCalendarSyncJobDa
   }
 
   try {
-    const { clientId, clientSecret, encryptionKey } = getGoogleOAuthEnv();
-    const refreshToken = decryptToken(connection.refreshToken, encryptionKey);
-    const { accessToken } = await refreshAccessToken({ refreshToken, clientId, clientSecret });
+    const accessToken = await getValidAccessToken(connection);
 
     await syncBookingToGoogleCalendar(booking, connection, accessToken);
 

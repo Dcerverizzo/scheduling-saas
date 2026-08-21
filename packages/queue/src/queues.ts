@@ -4,6 +4,7 @@ import { redisConnection } from "./connection";
 export const NOTIFICATIONS_QUEUE = "notifications";
 export const BOOKING_REMINDERS_QUEUE = "booking-reminders";
 export const GOOGLE_CALENDAR_SYNC_QUEUE = "google-calendar-sync";
+export const GOOGLE_CALENDAR_INBOUND_SYNC_QUEUE = "google-calendar-inbound-sync";
 
 export interface SendNotificationJobData {
   notificationLogId: string;
@@ -22,10 +23,18 @@ export interface GoogleCalendarSyncJobData {
   bookingId: string;
 }
 
+// Sync inbound é por CONEXÃO (staff), não por booking — evento pessoal do
+// Google não tem nenhum booking associado. Fila separada da outbound porque
+// os dois sentidos do sync têm gatilhos e granularidade bem diferentes.
+export interface GoogleCalendarInboundSyncJobData {
+  connectionId: string;
+}
+
 const globalForQueues = globalThis as unknown as {
   notificationsQueue: Queue<SendNotificationJobData> | undefined;
   bookingRemindersQueue: Queue<BookingReminderJobData> | undefined;
   googleCalendarSyncQueue: Queue<GoogleCalendarSyncJobData> | undefined;
+  googleCalendarInboundSyncQueue: Queue<GoogleCalendarInboundSyncJobData> | undefined;
 };
 
 export function getNotificationsQueue(): Queue<SendNotificationJobData> {
@@ -49,4 +58,12 @@ export function getGoogleCalendarSyncQueue(): Queue<GoogleCalendarSyncJobData> {
     { connection: redisConnection },
   );
   return globalForQueues.googleCalendarSyncQueue;
+}
+
+export function getGoogleCalendarInboundSyncQueue(): Queue<GoogleCalendarInboundSyncJobData> {
+  globalForQueues.googleCalendarInboundSyncQueue ??= new Queue<GoogleCalendarInboundSyncJobData>(
+    GOOGLE_CALENDAR_INBOUND_SYNC_QUEUE,
+    { connection: redisConnection },
+  );
+  return globalForQueues.googleCalendarInboundSyncQueue;
 }
