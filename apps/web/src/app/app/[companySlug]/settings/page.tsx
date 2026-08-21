@@ -9,11 +9,16 @@ export default async function CompanySettingsPage({
   const { company } = await requireCompanyOwner(companySlug);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-16">
-      <CompanyNav companySlug={companySlug} />
-      <h1 className="text-xl font-semibold">Configurações — {company.name}</h1>
+    <>
+      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <main className="mx-auto w-full max-w-xl flex-1 px-6 py-10">
+        <h1 className="text-xl font-bold">Configurações</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{company.name}</p>
 
-      <UpdateCompanyForm companySlug={companySlug} company={company} />
-    </main>
+        <div className="mt-8 rounded-lg border border-border bg-card p-6">
+          <UpdateCompanyForm companySlug={companySlug} company={company} />
+        </div>
+      </main>
+    </>
   );
 }

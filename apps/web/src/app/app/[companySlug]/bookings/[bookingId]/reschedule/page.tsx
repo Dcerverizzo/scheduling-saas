@@ -5,6 +5,8 @@ import { prisma, type Company, type Service, type StaffProfile } from "@scheduli
 import { requireCompanyContext } from "@/lib/company-context";
 import { getSlotsForStaff } from "@/lib/booking/get-slots-for-staff";
 import { RescheduleSlotGrid } from "@/components/booking/RescheduleSlotGrid";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { rescheduleCompanyBookingAction } from "../../actions";
 
 export default async function RescheduleCompanyBookingPage({
@@ -38,38 +40,38 @@ export default async function RescheduleCompanyBookingPage({
   const today = DateTime.now().setZone(company.timezone).toISODate();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-16">
-      <h1 className="text-xl font-semibold">
-        Reagendar — {booking.serviceNameSnapshot} com {booking.staff.displayName}
-      </h1>
-      <p className="text-sm text-gray-500">
-        Horário atual:{" "}
-        {booking.startsAt.toLocaleString("pt-BR", { timeZone: company.timezone })}
-      </p>
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-6 py-14">
+      <div>
+        <h1 className="text-xl font-bold">
+          Reagendar — {booking.serviceNameSnapshot} com {booking.staff.displayName}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Horário atual: {booking.startsAt.toLocaleString("pt-BR", { timeZone: company.timezone })}
+        </p>
+      </div>
 
-      {error ? (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-      ) : null}
+      {error ? <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
 
       <form
         action={`/app/${companySlug}/bookings/${bookingId}/reschedule`}
         method="get"
-        className="flex items-end gap-4"
+        className="flex items-end gap-3"
       >
-        <label className="flex flex-col gap-1 text-sm">
-          Nova data
-          <input
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium" htmlFor="reschedule-date">
+            Nova data
+          </label>
+          <Input
+            id="reschedule-date"
             type="date"
             name="date"
             required
             min={today ?? undefined}
             defaultValue={date}
-            className="rounded-md border border-gray-300 px-3 py-2"
+            className="font-mono-data"
           />
-        </label>
-        <button type="submit" className="rounded-md bg-gray-900 px-3 py-2 text-sm text-white">
-          Ver horários
-        </button>
+        </div>
+        <Button type="submit">Ver horários</Button>
       </form>
 
       {date ? (
@@ -83,7 +85,7 @@ export default async function RescheduleCompanyBookingPage({
         />
       ) : null}
 
-      <Link href={`/app/${companySlug}/bookings`} className="text-sm underline">
+      <Link href={`/app/${companySlug}/bookings`} className="text-sm text-muted-foreground hover:underline">
         ← voltar pra agenda
       </Link>
     </main>
@@ -109,7 +111,7 @@ async function RescheduleDateSlots({
 
   return (
     <section>
-      <h2 className="text-lg font-medium">Horários disponíveis em {date}</h2>
+      <h2 className="text-sm font-semibold text-muted-foreground">Horários disponíveis em {date}</h2>
       <RescheduleSlotGrid
         slots={slots}
         companyTimezone={company.timezone}

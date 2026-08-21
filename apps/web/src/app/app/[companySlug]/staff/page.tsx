@@ -1,5 +1,6 @@
 import { prisma } from "@scheduling-saas/database";
 import { requireCompanyOwner } from "@/lib/company-context";
+import { badgeVariants } from "@/components/ui/badge";
 import { CompanyNav } from "../CompanyNav";
 import { CreateStaffForm } from "./CreateStaffForm";
 import { toggleStaffActiveAction } from "./actions";
@@ -15,50 +16,62 @@ export default async function StaffPage({ params }: PageProps<"/app/[companySlug
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-4 py-16">
-      <CompanyNav companySlug={companySlug} />
-      <section>
-        <h1 className="text-xl font-semibold">Equipe — {company.name}</h1>
-        {staff.length === 0 ? (
-          <p className="mt-2 text-sm text-gray-600">Nenhum profissional cadastrado ainda.</p>
-        ) : (
-          <ul className="mt-4 flex flex-col gap-3">
-            {staff.map((member) => {
-              const toggleAction = toggleStaffActiveAction.bind(null, companySlug, member.id);
-              return (
-                <li
-                  key={member.id}
-                  className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{member.displayName}</p>
-                    <p className="text-xs text-gray-500">{member.user.email}</p>
+    <>
+      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <main className="mx-auto grid w-full max-w-5xl flex-1 gap-10 px-6 py-10 lg:grid-cols-[1fr_360px]">
+        <section>
+          <h1 className="text-xl font-bold">Equipe</h1>
+          {staff.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">Nenhum profissional cadastrado ainda.</p>
+          ) : (
+            <div className="mt-5 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
+              {staff.map((member) => {
+                const toggleAction = toggleStaffActiveAction.bind(null, companySlug, member.id);
+                const initials = member.displayName.slice(0, 2).toUpperCase();
+                return (
+                  <div key={member.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                    <div className="flex items-center gap-3.5">
+                      <span
+                        className={`font-mono-data flex size-9 flex-none items-center justify-center rounded-full text-[13px] font-bold ${
+                          member.active
+                            ? "bg-secondary text-secondary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {initials}
+                      </span>
+                      <div className={member.active ? "" : "opacity-60"}>
+                        <p className="text-sm font-semibold">{member.displayName}</p>
+                        <p className="text-xs text-muted-foreground">{member.user.email}</p>
+                      </div>
+                    </div>
+                    <form action={toggleAction}>
+                      <button
+                        type="submit"
+                        className={badgeVariants({ variant: member.active ? "success" : "accent" })}
+                      >
+                        {member.active ? "Ativo — desativar" : "Inativo — ativar"}
+                      </button>
+                    </form>
                   </div>
-                  <form action={toggleAction}>
-                    <button
-                      type="submit"
-                      className={`rounded-md px-3 py-1 text-xs font-medium ${
-                        member.active
-                          ? "bg-gray-100 text-gray-700"
-                          : "bg-yellow-50 text-yellow-800"
-                      }`}
-                    >
-                      {member.active ? "Ativo — desativar" : "Inativo — ativar"}
-                    </button>
-                  </form>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
-      <section>
-        <h2 className="text-lg font-semibold">Cadastrar profissional</h2>
-        <div className="mt-4">
-          <CreateStaffForm companySlug={companySlug} />
-        </div>
-      </section>
-    </main>
+        <section>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="text-[15px] font-bold">Cadastrar profissional</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              A senha temporária aparece uma única vez.
+            </p>
+            <div className="mt-5">
+              <CreateStaffForm companySlug={companySlug} />
+            </div>
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

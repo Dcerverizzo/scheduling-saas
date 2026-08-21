@@ -28,61 +28,64 @@ export default async function GoogleCalendarPage({
   const connection = staff?.googleCalendarConnection ?? null;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-4 py-16">
-      <CompanyNav companySlug={companySlug} />
-      <section>
-        <h1 className="text-xl font-semibold">Google Calendar</h1>
+    <>
+      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <main className="mx-auto w-full max-w-xl flex-1 px-6 py-10">
+        <h1 className="text-xl font-bold">Google Calendar</h1>
 
         {!staff ? (
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-3 text-sm text-muted-foreground">
             Só profissionais cadastrados na equipe podem conectar a própria agenda.
           </p>
         ) : (
           <>
-            <p className="mt-2 text-sm text-gray-600">
-              Conecte seu Google Calendar pessoal pra que seus agendamentos apareçam
-              automaticamente lá, e pra que compromissos marcados direto no Google bloqueiem
-              sua disponibilidade aqui.
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Conecte seu Google Calendar pessoal pra que seus agendamentos apareçam automaticamente lá,
+              e pra que compromissos marcados direto no Google bloqueiem sua disponibilidade aqui.
             </p>
 
             {errorMessage ? (
-              <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="mt-5 rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                 {errorMessage}
               </p>
             ) : null}
 
             {connection?.status === "ERROR" ? (
-              <p className="mt-4 rounded-md bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+              <p className="mt-5 rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                 Google Calendar desconectado — reconecte pra continuar sincronizando sua agenda.
               </p>
             ) : null}
 
             {connection ? (
-              <div className="mt-4 flex items-center justify-between rounded-md border border-gray-200 px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium">Conectado</p>
-                  <p className="text-xs text-gray-500">{connection.googleAccountEmail}</p>
+              <div className="mt-5 flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-5">
+                <div className="flex items-center gap-3.5">
+                  <span className="flex size-9 items-center justify-center rounded-full bg-success-soft text-success">
+                    ✓
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold">Conectado</p>
+                    <p className="font-mono-data mt-0.5 text-xs text-muted-foreground">
+                      {connection.googleAccountEmail}
+                    </p>
+                  </div>
                 </div>
                 <form action={disconnectGoogleCalendarAction.bind(null, companySlug)}>
-                  <button type="submit" className="text-xs text-red-600 underline">
+                  <button type="submit" className="text-xs text-destructive hover:underline">
                     desconectar
                   </button>
                 </form>
               </div>
             ) : (
-              // Navegação real de servidor (não SPA) — precisa seguir o redirect 302 pro
-              // Google, então é <a>, não <Link> (mesmo critério do Step 6 pra links
-              // externos: eslint-config-next não marca isso porque a rota não é uma page).
               <a
                 href={`/api/google-calendar/connect?companySlug=${companySlug}`}
-                className="mt-4 inline-block rounded-md bg-gray-900 px-3 py-2 text-sm text-white"
+                className="mt-5 inline-block rounded-md bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:bg-foreground/90"
               >
                 Conectar Google Calendar
               </a>
             )}
           </>
         )}
-      </section>
-    </main>
+      </main>
+    </>
   );
 }

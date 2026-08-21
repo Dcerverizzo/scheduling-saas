@@ -1,6 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { updateCompanyAction } from "./actions";
 
 type CompanyFields = {
@@ -29,86 +32,51 @@ export function UpdateCompanyForm({
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-5">
       {state.error ? (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{state.error}</p>
       ) : null}
 
-      <label className="flex flex-col gap-1 text-sm">
-        Nome
-        <input
-          type="text"
-          name="name"
-          required
-          defaultValue={company.name}
-          className="rounded-md border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Telefone (WhatsApp)
-        <input
-          type="tel"
-          name="phone"
-          defaultValue={company.phone ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Fuso horário (IANA)
-        <input
-          type="text"
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="name">Nome</Label>
+        <Input id="name" name="name" required defaultValue={company.name} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="phone">Telefone (WhatsApp)</Label>
+        <Input id="phone" name="phone" type="tel" className="font-mono-data" defaultValue={company.phone ?? ""} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="timezone">Fuso horário (IANA)</Label>
+        <Input
+          id="timezone"
           name="timezone"
           required
+          className="font-mono-data"
           defaultValue={company.timezone}
-          className="rounded-md border border-gray-300 px-3 py-2"
         />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Endereço
-        <input
-          type="text"
-          name="addressLine1"
-          defaultValue={company.addressLine1 ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <div className="grid grid-cols-2 gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Cidade
-          <input
-            type="text"
-            name="city"
-            defaultValue={company.city ?? ""}
-            className="rounded-md border border-gray-300 px-3 py-2"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Estado
-          <input
-            type="text"
-            name="state"
-            defaultValue={company.state ?? ""}
-            className="rounded-md border border-gray-300 px-3 py-2"
-          />
-        </label>
       </div>
-      <label className="flex flex-col gap-1 text-sm">
-        CEP
-        <input
-          type="text"
-          name="postalCode"
-          defaultValue={company.postalCode ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2"
-        />
-      </label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="addressLine1">Endereço</Label>
+        <Input id="addressLine1" name="addressLine1" defaultValue={company.addressLine1 ?? ""} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="city">Cidade</Label>
+          <Input id="city" name="city" defaultValue={company.city ?? ""} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="state">Estado</Label>
+          <Input id="state" name="state" defaultValue={company.state ?? ""} />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="postalCode">CEP</Label>
+        <Input id="postalCode" name="postalCode" className="font-mono-data" defaultValue={company.postalCode ?? ""} />
+      </div>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isPending} className="mt-1 h-10">
         {isPending ? "Salvando..." : "Salvar"}
-      </button>
+      </Button>
     </form>
   );
 }
