@@ -15,7 +15,6 @@ export async function createCompanyAction(formData: FormData) {
   const parsed = createCompanySchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone") || undefined,
-    timezone: formData.get("timezone") || undefined,
   });
   if (!parsed.success) {
     redirect("/app?error=1");

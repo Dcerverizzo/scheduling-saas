@@ -89,15 +89,6 @@ export default async function AppHomePage({ searchParams }: PageProps<"/app">) {
                 className="font-mono-data"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="company-timezone">Fuso horário</Label>
-              <Input
-                id="company-timezone"
-                name="timezone"
-                defaultValue="America/Sao_Paulo"
-                className="font-mono-data"
-              />
-            </div>
             <Button type="submit" className="mt-1 h-10">
               Criar empresa
             </Button>
