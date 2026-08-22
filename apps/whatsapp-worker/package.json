@@ -13,6 +13,7 @@
   "dependencies": {
     "@scheduling-saas/calendar": "workspace:*",
     "@scheduling-saas/notifications": "workspace:*",
+    "@scheduling-saas/payments": "workspace:*",
     "@scheduling-saas/queue": "workspace:*",
     "@scheduling-saas/config": "workspace:*",
     "@scheduling-saas/database": "workspace:*",

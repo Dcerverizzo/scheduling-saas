@@ -5,6 +5,8 @@ export const NOTIFICATIONS_QUEUE = "notifications";
 export const BOOKING_REMINDERS_QUEUE = "booking-reminders";
 export const GOOGLE_CALENDAR_SYNC_QUEUE = "google-calendar-sync";
 export const GOOGLE_CALENDAR_INBOUND_SYNC_QUEUE = "google-calendar-inbound-sync";
+export const PAYMENT_WEBHOOK_QUEUE = "payment-webhook";
+export const SUBSCRIPTION_WEBHOOK_QUEUE = "subscription-webhook";
 
 export interface SendNotificationJobData {
   notificationLogId: string;
@@ -30,11 +32,24 @@ export interface GoogleCalendarInboundSyncJobData {
   connectionId: string;
 }
 
+// O job só carrega o id — nunca o status ou o valor mandado no corpo do webhook (que é só um
+// aviso "algo mudou"). O worker sempre re-busca o pagamento/assinatura real via getPayment()/
+// getPreapproval() antes de agir, mesmo padrão já usado no sync do Google Calendar.
+export interface PaymentWebhookJobData {
+  mpPaymentId: string;
+}
+
+export interface SubscriptionWebhookJobData {
+  mpPreapprovalId: string;
+}
+
 const globalForQueues = globalThis as unknown as {
   notificationsQueue: Queue<SendNotificationJobData> | undefined;
   bookingRemindersQueue: Queue<BookingReminderJobData> | undefined;
   googleCalendarSyncQueue: Queue<GoogleCalendarSyncJobData> | undefined;
   googleCalendarInboundSyncQueue: Queue<GoogleCalendarInboundSyncJobData> | undefined;
+  paymentWebhookQueue: Queue<PaymentWebhookJobData> | undefined;
+  subscriptionWebhookQueue: Queue<SubscriptionWebhookJobData> | undefined;
 };
 
 export function getNotificationsQueue(): Queue<SendNotificationJobData> {
@@ -66,4 +81,19 @@ export function getGoogleCalendarInboundSyncQueue(): Queue<GoogleCalendarInbound
     { connection: redisConnection },
   );
   return globalForQueues.googleCalendarInboundSyncQueue;
+}
+
+export function getPaymentWebhookQueue(): Queue<PaymentWebhookJobData> {
+  globalForQueues.paymentWebhookQueue ??= new Queue<PaymentWebhookJobData>(PAYMENT_WEBHOOK_QUEUE, {
+    connection: redisConnection,
+  });
+  return globalForQueues.paymentWebhookQueue;
+}
+
+export function getSubscriptionWebhookQueue(): Queue<SubscriptionWebhookJobData> {
+  globalForQueues.subscriptionWebhookQueue ??= new Queue<SubscriptionWebhookJobData>(
+    SUBSCRIPTION_WEBHOOK_QUEUE,
+    { connection: redisConnection },
+  );
+  return globalForQueues.subscriptionWebhookQueue;
 }
