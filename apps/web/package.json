@@ -15,6 +15,7 @@
     "@scheduling-saas/config": "workspace:*",
     "@scheduling-saas/database": "workspace:*",
     "@scheduling-saas/domain": "workspace:*",
+    "@scheduling-saas/payments": "workspace:*",
     "@scheduling-saas/queue": "workspace:*",
     "@scheduling-saas/validation": "workspace:*",
     "bcryptjs": "3.0.3",

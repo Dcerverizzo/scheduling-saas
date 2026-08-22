@@ -14,6 +14,7 @@ import {
 } from "@/lib/notifications/enqueue-booking-notifications";
 import { enqueueGoogleCalendarSync } from "@/lib/google-calendar/enqueue-booking-sync";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { createBookingPayment } from "@/lib/payments/create-booking-payment";
 
 export async function confirmBookingAction(
   companySlug: string,
@@ -59,6 +60,14 @@ export async function confirmBookingAction(
       idempotencyKey: idempotencyKey || undefined,
       actorUserId: session.user.id,
     });
+
+    if (booking.status === "PENDING") {
+      // Empresa exige pagamento — nada de confirmação/lembrete/sync do Calendar ainda (o
+      // booking pode expirar sem pagar). O worker dispara tudo isso quando o webhook do
+      // Mercado Pago confirmar (ver process-payment-webhook.ts).
+      const { initPoint } = await createBookingPayment(booking, company);
+      redirect(initPoint);
+    }
 
     // Fora da transação de criação do booking (item 21 do PRD).
     await enqueueBookingConfirmation(booking.id);
@@ -139,6 +148,11 @@ export async function confirmGuestBookingAction(
       idempotencyKey: idempotencyKey || undefined,
       actorUserId: customer.userId,
     });
+
+    if (booking.status === "PENDING") {
+      const { initPoint } = await createBookingPayment(booking, company);
+      redirect(initPoint);
+    }
 
     // Fora da transação de criação do booking (item 21 do PRD).
     await enqueueBookingConfirmation(booking.id);

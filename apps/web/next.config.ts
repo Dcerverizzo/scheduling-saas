@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
     "@scheduling-saas/queue",
     "@scheduling-saas/notifications",
     "@scheduling-saas/calendar",
+    "@scheduling-saas/payments",
   ],
 };
 

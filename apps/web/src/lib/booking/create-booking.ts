@@ -124,6 +124,13 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
     );
   }
 
+  // Empresa sem exigência de pagamento segue direto pra CONFIRMED (comportamento de sempre).
+  // Com DEPOSIT/FULL, o booking nasce PENDING — já está em BLOCKING_BOOKING_STATUSES, então o
+  // slot continua protegido pela exclusion constraint GiST sem nenhuma mudança nela; quem chama
+  // (confirmBookingAction/confirmGuestBookingAction) é responsável por criar o Payment e
+  // redirecionar pro checkout quando o status vier PENDING.
+  const initialStatus = company.paymentRequirement === "NONE" ? "CONFIRMED" : "PENDING";
+
   try {
     return await prisma.$transaction(async (tx) => {
       const booking = await tx.booking.create({
@@ -134,7 +141,7 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
           serviceId: service.id,
           startsAt: input.startsAt,
           endsAt,
-          status: "CONFIRMED",
+          status: initialStatus,
           customerNameSnapshot: customer.user.name,
           customerPhoneSnapshot: customer.phone,
           serviceNameSnapshot: service.name,
