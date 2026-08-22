@@ -67,6 +67,63 @@ enum GoogleCalendarConnectionStatus {
   ERROR
 }
 
+// Tiers da assinatura da própria SaaS (dono do salão paga a plataforma) — enum + config em
+// código (packages/domain/src/plans/plan-config.ts), não tabela: não existe admin UI pra
+// gerenciar planos ainda, e trocar preço/limite de um tier não deve exigir migration.
+enum PlanTier {
+  FREE
+  STARTER
+  PRO
+}
+
+// Campo denormalizado em Company (lido em todo request tenant-scoped, sem join). INCOMPLETE
+// cobre o intervalo entre "preapproval criada" e "payer autorizou no Mercado Pago" — Company
+// nasce TRIALING (ver trialEndsAt), nunca INCOMPLETE, até uma assinatura real ser iniciada.
+enum CompanySubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+// Status da CompanySubscription (bookkeeping específico do Mercado Pago) — eixo diferente de
+// CompanySubscriptionStatus: este é o estado da preapproval no MP, aquele é o que o resto do
+// app lê pra gating de feature.
+enum PlatformSubscriptionStatus {
+  PENDING
+  AUTHORIZED
+  PAUSED
+  CANCELLED
+}
+
+// Configuração por empresa de exigência de pagamento no momento do booking — NONE mantém o
+// comportamento atual (booking direto pra CONFIRMED), DEPOSIT/FULL fazem o booking nascer
+// PENDING até o webhook do Mercado Pago confirmar (ver Payment).
+enum PaymentRequirement {
+  NONE
+  DEPOSIT
+  FULL
+}
+
+enum PaymentType {
+  FULL
+  DEPOSIT
+}
+
+// EXPIRED é resultado da reconciliação periódica (Payment.expiresAt vencido sem aprovação) —
+// não vem do Mercado Pago. Um Payment REJECTED/CANCELLED/EXPIRED cancela o Booking associado;
+// não existe retry no mesmo Payment, uma nova tentativa é um Booking novo (mantém a garantia da
+// exclusion constraint simples — só PENDING/CONFIRMED bloqueiam o slot).
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+  EXPIRED
+}
+
 // email/passwordHash são opcionais por causa do agendamento sem conta (Fase 2):
 // um User "convidado" (isGuest=true) nasce só com nome+telefone, sem credencial
 // nenhuma — nunca consegue logar via Credentials (authorize() exige
@@ -153,6 +210,18 @@ model Company {
   postalCode   String?
   country      String  @default("BR")
 
+  // Assinatura da SaaS (billing do dono) — denormalizado aqui pra leitura sem join em todo
+  // gating de plano; CompanySubscription abaixo guarda o bookkeeping do lado do Mercado Pago.
+  plan               PlanTier                   @default(FREE)
+  subscriptionStatus CompanySubscriptionStatus  @default(TRIALING)
+  trialEndsAt        DateTime?
+
+  // Exigência de pagamento no momento do booking (cliente final → empresa). depositPercentage
+  // só é obrigatório na aplicação quando paymentRequirement = DEPOSIT (não no schema — mesmo
+  // padrão de campo opcional condicional já usado em GoogleCalendarConnection).
+  paymentRequirement PaymentRequirement @default(NONE)
+  depositPercentage  Int?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -167,6 +236,8 @@ model Company {
   notificationLogs          NotificationLog[]
   googleCalendarConnections GoogleCalendarConnection[]
   bookingCalendarEvents     BookingCalendarEvent[]
+  subscription              CompanySubscription?
+  payments                  Payment[]
 
   @@map("companies")
 }
@@ -354,6 +425,7 @@ model Booking {
   events           BookingEvent[]
   notificationLogs NotificationLog[]
   calendarEvent    BookingCalendarEvent?
+  payment          Payment?
 
   @@index([companyId])
   @@index([staffId, startsAt])
@@ -469,4 +541,61 @@ model BookingCalendarEvent {
   @@index([companyId])
   @@index([staffId])
   @@map("booking_calendar_events")
+}
+
+// Bookkeeping da assinatura da SaaS no lado do Mercado Pago — mesmo papel que
+// GoogleCalendarConnection cumpre pro Google: uma tabela satélite 1:1 com o tenant, fora do
+// hot path de Company, que a reconciliação periódica pode re-sincronizar independente do
+// webhook ter chegado ou não. Company.plan/subscriptionStatus/trialEndsAt são a cópia
+// denormalizada que o resto do app lê; esta tabela é a fonte de verdade do lado do MP.
+model CompanySubscription {
+  id                  String                      @id @default(uuid())
+  companyId           String                      @unique
+  planTier            PlanTier
+  mpPreapprovalId     String?                     @unique
+  mpPreapprovalPlanId String?
+  status              PlatformSubscriptionStatus  @default(PENDING)
+  payerEmail          String?
+  lastSyncedAt        DateTime?
+  lastErrorAt         DateTime?
+  lastErrorMessage    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("company_subscriptions")
+}
+
+// Pagamento de UM booking (cliente final → empresa, via a plataforma). bookingId é único: sem
+// retry no mesmo Payment — um pagamento REJECTED/CANCELLED/EXPIRED cancela o Booking, uma nova
+// tentativa é um Booking novo (mantém a exclusion constraint GiST simples, só PENDING/CONFIRMED
+// bloqueiam o slot). expiresAt dirige o sweep de reconciliação que cancela booking não pago.
+model Payment {
+  id              String        @id @default(uuid())
+  companyId       String
+  bookingId       String        @unique
+  type            PaymentType
+  amountInCents   Int
+  status          PaymentStatus @default(PENDING)
+
+  mpPreferenceId  String? @unique
+  mpPaymentId     String? @unique
+  mpPaymentMethod String?
+  mpStatusDetail  String?
+
+  approvedAt DateTime?
+  expiresAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([status])
+  @@map("payments")
 }
