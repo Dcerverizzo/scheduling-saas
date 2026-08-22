@@ -1,6 +1,7 @@
 import "server-only";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma, type Company, type CompanyMember } from "@scheduling-saas/database";
+import { isSubscriptionBlocked, planIncludesFeature, type PlanFeature } from "@scheduling-saas/domain";
 import { requireSession } from "@/lib/session";
 
 // A "empresa ativa" não fica em sessão/cookie — o slug na URL já isola o tenant,
@@ -33,5 +34,25 @@ export async function requireCompanyOwner(companySlug: string) {
   if (context.membership.role !== "OWNER") {
     notFound();
   }
+  return context;
+}
+
+// Scaffolding pronto pra quando o gating de plano for de fato aplicado em alguma rota — ainda
+// não é chamado em lugar nenhum do app hoje. Números/tiers reais de plano ainda não foram
+// decididos (ver packages/domain/src/plans/plan-config.ts), então nenhuma feature já existente
+// (sync do Google Calendar, agendamento sem conta, etc.) está bloqueada por plano. Mesmo
+// formato de requireCompanyOwner — nunca `if (company.plan === "PRO")` espalhado pelo código.
+export async function requireCompanyPlanFeature(companySlug: string, feature: PlanFeature) {
+  const context = await requireCompanyContext(companySlug);
+  const { company } = context;
+
+  const blocked =
+    isSubscriptionBlocked(company.subscriptionStatus, company.trialEndsAt, new Date()) ||
+    !planIncludesFeature(company.plan, feature);
+
+  if (blocked) {
+    redirect(`/app/${companySlug}/settings?upsell=${encodeURIComponent(feature)}`);
+  }
+
   return context;
 }
