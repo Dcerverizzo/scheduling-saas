@@ -21,6 +21,16 @@ export const updateCompanySchema = z.object({
   postalCode: z.string().trim().max(20).optional(),
 });
 
+export const updateCompanyPaymentSettingsSchema = z
+  .object({
+    paymentRequirement: z.enum(["NONE", "DEPOSIT", "FULL"]),
+    depositPercentage: z.coerce.number().int().min(1).max(99).optional(),
+  })
+  .refine((data) => data.paymentRequirement !== "DEPOSIT" || typeof data.depositPercentage === "number", {
+    message: "Informe o percentual do sinal.",
+    path: ["depositPercentage"],
+  });
+
 export const createStaffSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.email(),

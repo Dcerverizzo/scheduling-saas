@@ -1,6 +1,7 @@
 import { requireCompanyOwner } from "@/lib/company-context";
 import { CompanyNav } from "../CompanyNav";
 import { UpdateCompanyForm } from "./UpdateCompanyForm";
+import { PaymentSettingsForm } from "./PaymentSettingsForm";
 
 export default async function CompanySettingsPage({
   params,
@@ -17,6 +18,18 @@ export default async function CompanySettingsPage({
 
         <div className="mt-8 rounded-lg border border-border bg-card p-6">
           <UpdateCompanyForm companySlug={companySlug} company={company} />
+        </div>
+
+        <h2 className="mt-10 text-[15px] font-bold">Pagamento</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Configura se o cliente precisa pagar pelo Mercado Pago pra confirmar o agendamento.
+        </p>
+        <div className="mt-4 rounded-lg border border-border bg-card p-6">
+          <PaymentSettingsForm
+            companySlug={companySlug}
+            paymentRequirement={company.paymentRequirement}
+            depositPercentage={company.depositPercentage}
+          />
         </div>
       </main>
     </>
