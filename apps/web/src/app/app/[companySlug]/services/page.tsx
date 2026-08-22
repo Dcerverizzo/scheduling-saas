@@ -27,7 +27,7 @@ export default async function ServicesPage({
 
   return (
     <>
-      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <CompanyNav companySlug={companySlug} companyName={company.name} isOwner={isOwner} />
       <main
         className={`mx-auto w-full flex-1 gap-10 px-6 py-10 ${
           isOwner ? "grid max-w-5xl lg:grid-cols-[1fr_400px]" : "max-w-2xl"

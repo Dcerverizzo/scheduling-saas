@@ -49,7 +49,7 @@ export default async function CompanyBookingsPage({
 
   return (
     <>
-      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <CompanyNav companySlug={companySlug} companyName={company.name} isOwner={membership.role === "OWNER"} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 sm:px-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">

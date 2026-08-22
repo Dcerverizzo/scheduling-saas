@@ -10,7 +10,7 @@ export default async function CompanySettingsPage({
 
   return (
     <>
-      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <CompanyNav companySlug={companySlug} companyName={company.name} isOwner />
       <main className="mx-auto w-full max-w-xl flex-1 px-6 py-10">
         <h1 className="text-xl font-bold">Configurações</h1>
         <p className="mt-1 text-sm text-muted-foreground">{company.name}</p>

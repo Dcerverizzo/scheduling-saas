@@ -17,7 +17,7 @@ export default async function StaffPage({ params }: PageProps<"/app/[companySlug
 
   return (
     <>
-      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <CompanyNav companySlug={companySlug} companyName={company.name} isOwner />
       <main className="mx-auto grid w-full max-w-5xl flex-1 gap-10 px-6 py-10 lg:grid-cols-[1fr_360px]">
         <section>
           <h1 className="text-xl font-bold">Equipe</h1>

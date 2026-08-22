@@ -32,7 +32,7 @@ export default async function AvailabilityPage({
 
   return (
     <>
-      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <CompanyNav companySlug={companySlug} companyName={company.name} isOwner />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         {staff.length === 0 ? (
           <p className="text-sm text-muted-foreground">

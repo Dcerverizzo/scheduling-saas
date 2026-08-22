@@ -7,16 +7,25 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { logoutAction } from "@/lib/auth-actions";
 
 const LINKS = [
-  { href: "bookings", label: "Agenda" },
-  { href: "settings", label: "Configurações" },
-  { href: "staff", label: "Equipe" },
-  { href: "services", label: "Serviços" },
-  { href: "availability", label: "Disponibilidade" },
-  { href: "google-calendar", label: "Google Calendar" },
+  { href: "bookings", label: "Agenda", ownerOnly: false },
+  { href: "settings", label: "Configurações", ownerOnly: true },
+  { href: "staff", label: "Equipe", ownerOnly: true },
+  { href: "services", label: "Serviços", ownerOnly: false },
+  { href: "availability", label: "Disponibilidade", ownerOnly: true },
+  { href: "google-calendar", label: "Google Calendar", ownerOnly: false },
 ] as const;
 
-export function CompanyNav({ companySlug, companyName }: { companySlug: string; companyName: string }) {
+export function CompanyNav({
+  companySlug,
+  companyName,
+  isOwner,
+}: {
+  companySlug: string;
+  companyName: string;
+  isOwner: boolean;
+}) {
   const pathname = usePathname();
+  const links = LINKS.filter((link) => isOwner || !link.ownerOnly);
 
   return (
     <nav className="flex h-16 w-full items-center justify-between border-b border-border bg-card px-6 sm:px-10">
@@ -31,7 +40,7 @@ export function CompanyNav({ companySlug, companyName }: { companySlug: string; 
         <span className="h-5 w-px bg-border" />
         <span className="font-mono-data text-sm font-bold tracking-tight">{companyName}</span>
         <div className="hidden items-center gap-7 sm:flex">
-          {LINKS.map((link) => {
+          {links.map((link) => {
             const href = `/app/${companySlug}/${link.href}`;
             const active = pathname === href || pathname?.startsWith(`${href}/`);
             return (

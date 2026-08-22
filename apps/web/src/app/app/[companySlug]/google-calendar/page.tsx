@@ -16,7 +16,7 @@ export default async function GoogleCalendarPage({
 }: PageProps<"/app/[companySlug]/google-calendar">) {
   const { companySlug } = await params;
   const search = await searchParams;
-  const { userId, company } = await requireCompanyContext(companySlug);
+  const { userId, company, membership } = await requireCompanyContext(companySlug);
 
   const staff = await prisma.staffProfile.findUnique({
     where: { companyId_userId: { companyId: company.id, userId } },
@@ -29,7 +29,7 @@ export default async function GoogleCalendarPage({
 
   return (
     <>
-      <CompanyNav companySlug={companySlug} companyName={company.name} />
+      <CompanyNav companySlug={companySlug} companyName={company.name} isOwner={membership.role === "OWNER"} />
       <main className="mx-auto w-full max-w-xl flex-1 px-6 py-10">
         <h1 className="text-xl font-bold">Google Calendar</h1>
 
