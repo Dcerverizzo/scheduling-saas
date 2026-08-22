@@ -7,3 +7,5 @@ export * from "./availability/intervals";
 export * from "./booking/status";
 export * from "./errors";
 export * from "./phone/normalize";
+export * from "./plans/plan-config";
+export * from "./plans/plan-policies";

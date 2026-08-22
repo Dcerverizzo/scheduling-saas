@@ -7,7 +7,9 @@ export type DomainErrorCode =
   | "COMPANY_NOT_FOUND"
   | "BOOKING_NOT_FOUND"
   | "INVALID_BOOKING_STATE"
-  | "RATE_LIMITED";
+  | "RATE_LIMITED"
+  | "PAYMENT_SETUP_INVALID"
+  | "PAYMENT_INIT_FAILED";
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;
